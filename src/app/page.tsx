@@ -3,6 +3,8 @@
 import { QuantumCircuit } from '@/components/quantum/photonics/QuantumCircuit';
 import { QKDProtocol } from '@/components/quantum/networking/QKDProtocol';
 import { StateVisualizer } from '@/components/quantum/visualization/StateVisualizer';
+import { Icons } from '@/components/icons';
+import Link from 'next/link';
 
 export default function Home() {
   const demoStates = [
@@ -14,11 +16,13 @@ export default function Home() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Brisk Quantum Framework</h1>
-        <p className="text-muted-foreground">
-          A next-generation quantum computing framework for photonics and networking
-        </p>
+      <header className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">Brisk Quantum Framework</h1>
+          <p className="text-muted-foreground">
+            A next-generation quantum computing framework for photonics and networking
+          </p>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 gap-8">

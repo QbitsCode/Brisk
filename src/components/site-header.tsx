@@ -27,6 +27,17 @@ export function SiteHeader() {
               <Icons.x className="h-4 w-4 fill-current" />
               <span className="sr-only">X (formerly Twitter)</span>
             </Link>
+            <Link
+              href="https://github.com/QbitsCode/Brisk"
+              target="_blank"
+              rel="noreferrer"
+              className={buttonVariants({
+                size: "icon",
+                variant: "ghost",
+              })}
+            >
+              <Icons.github className="h-5 w-5" />
+            </Link>
             <ThemeToggle />
           </nav>
         </div>
