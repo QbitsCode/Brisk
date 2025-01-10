@@ -1,0 +1,24 @@
+title: Brisk
+description: Advanced Quantum Communications Platform
+theme: jekyll-theme-cayman
+
+# Navigation
+nav:
+  - Home: /
+  - Documentation: /docs
+  - GitHub: https://github.com/QbitsCode/Brisk
+
+# GitHub Pages settings
+github:
+  is_project_page: true
+  repository_url: https://github.com/QbitsCode/Brisk
+
+# Build settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
