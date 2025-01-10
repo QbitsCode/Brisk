@@ -1,0 +1,13 @@
+[console_scripts]
+pl-device-test = pennylane.devices.tests:cli
+
+[pennylane.plugins]
+default.clifford = pennylane.devices.default_clifford:DefaultClifford
+default.gaussian = pennylane.devices:DefaultGaussian
+default.mixed = pennylane.devices.default_mixed:DefaultMixed
+default.qubit = pennylane.devices:DefaultQubit
+default.qutrit = pennylane.devices.default_qutrit:DefaultQutrit
+default.qutrit.mixed = pennylane.devices.default_qutrit_mixed:DefaultQutritMixed
+default.tensor = pennylane.devices.default_tensor:DefaultTensor
+null.qubit = pennylane.devices.null_qubit:NullQubit
+reference.qubit = pennylane.devices.reference_qubit:ReferenceQubit

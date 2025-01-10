@@ -49,6 +49,12 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-4">
               <h3 className="text-xl font-medium">Quantum Circuit Designer</h3>
+              <a 
+                href="/designer" 
+                className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+              >
+                Open Designer
+              </a>
               <QuantumCircuit className="w-full" />
             </div>
 

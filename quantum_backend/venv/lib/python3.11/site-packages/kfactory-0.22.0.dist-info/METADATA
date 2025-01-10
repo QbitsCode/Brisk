@@ -1,0 +1,124 @@
+Metadata-Version: 2.1
+Name: kfactory
+Version: 0.22.0
+Summary: KLayout API implementation of gdsfactory
+Author-email: gdsfactory community <contact@gdsfactory.com>
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: aenum
+Requires-Dist: cachetools>=5.2.0
+Requires-Dist: gitpython
+Requires-Dist: loguru
+Requires-Dist: klayout>=0.29.7
+Requires-Dist: pydantic<3,>=2.0.2
+Requires-Dist: pydantic-settings<3,>=2.0.1
+Requires-Dist: rectangle-packer
+Requires-Dist: requests
+Requires-Dist: ruamel.yaml.string
+Requires-Dist: scipy
+Requires-Dist: tomli
+Requires-Dist: toolz
+Requires-Dist: typer
+Provides-Extra: dev
+Requires-Dist: kfactory[full]; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: pre-commit; extra == "dev"
+Requires-Dist: pylsp-mypy; extra == "dev"
+Requires-Dist: python-lsp-server[all]; extra == "dev"
+Requires-Dist: types-cachetools; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: types-docutils; extra == "dev"
+Requires-Dist: types-Pygments; extra == "dev"
+Requires-Dist: types-requests; extra == "dev"
+Requires-Dist: types-setuptools; extra == "dev"
+Requires-Dist: tbump; extra == "dev"
+Provides-Extra: docs
+Requires-Dist: kfactory[ipy]; extra == "docs"
+Requires-Dist: mkdocs; extra == "docs"
+Requires-Dist: mkdocs-jupyter>=0.24; extra == "docs"
+Requires-Dist: mkdocstrings[python]; extra == "docs"
+Requires-Dist: mkdocs-material; extra == "docs"
+Requires-Dist: mkdocs_gen_files; extra == "docs"
+Requires-Dist: mkdocs-literate-nav; extra == "docs"
+Requires-Dist: mkdocs-section-index; extra == "docs"
+Requires-Dist: mkdocs-video; extra == "docs"
+Requires-Dist: pymdown-extensions; extra == "docs"
+Provides-Extra: ci
+Requires-Dist: pytest; extra == "ci"
+Requires-Dist: pytest_regressions; extra == "ci"
+Requires-Dist: types-cachetools; extra == "ci"
+Requires-Dist: types-requests; extra == "ci"
+Requires-Dist: kfactory[full]; extra == "ci"
+Provides-Extra: ipy
+Requires-Dist: ipython; extra == "ipy"
+Requires-Dist: ipywidgets; extra == "ipy"
+Requires-Dist: ipytree; extra == "ipy"
+Requires-Dist: ipyevents; extra == "ipy"
+
+# KFactory 0.22.0
+
+Kfactory is a [gdsfactory](https://github.com/gdsfactory/gdsfactory)-like tool. It is built with [KLayout](https://klayout.de) as a backend instead of gdstk, but aims to offer the similar features.
+
+> [!CAUTION]
+> KFactory is still experimental
+> Expect API changes without notice (even though we try to keep it to a minimum!). The core should be fairly stable with the exception of the all-angle router.
+> It is likely to change in future releases
+
+It is suggest to pin the version of KFactory in `requirements.txt` or `pyproject.toml` with `kfactory==0.22.0` for example.
+
+Features similar to gdsfactory:
+
+- [x] Cells & decorator for caching & storing cells
+- [x] Simple routing (point to point and simpl bundle routes for electrical routes)
+- [x] Basic cells like euler/circular bends, taper, waveguide
+- [x] Path extrusion (no interface with CrossSections)
+- [x] Jupyter integration
+- [x] PDK/package configuration
+- [x] Plugin system (simulations etc.) - Check [kplugins](https://github.com/gdsfactory/kplugins)
+- [x] Generic PDK example - Check [kgeneric](https://github.com/gdsfactory/kgeneric)
+
+
+Notable missing Features:
+
+- [ ] CrossSection
+- [ ] Netlist/Schematics and LVS
+- [ ] More advanced routing
+
+
+New/Improved Features:
+
+- Fully hierarchical bi-directional conversion to YAML
+- Automatic snapping to grid thanks to KLayout
+- More features for vector geometries due to concept of Point/Edge/Vector/Polygon from Klayout
+- Easy booleans thanks to KLayout Regions
+- Enclosures: use the concept of enclosures, similar to cross sections, to allow automatic
+  calculation of boolean layers for structures based on [minkowski sum](https://en.wikipedia.org/wiki/Minkowski_addition),
+  which are built into KLayout
+
+
+## Installation
+
+kfactory is available on [pypi](https://pypi.org/project/kfactory/)
+
+```bash
+pip install kfactory
+```
+
+At the moment kfactory works only on python 3.10 and above
+
+### Development Installation
+
+
+A development environment can be installed with
+
+```bash
+python -m pip install -e .[dev]
+```
+
+It is defined in `pyproject.toml`. For committing `pre-commit` should be installed with `pre-commit install`.
