@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Brisk Quantum Framework
+
+A modern, interactive quantum computing framework for photonic quantum circuits and quantum network simulations.
+
+## Features
+
+- **Quantum Circuit Designer**: Interactive drag-and-drop interface for designing quantum photonic circuits
+- **Circuit Templates**: Pre-designed quantum circuit templates for common experiments
+- **Quantum Network Simulator**: Real-time simulation of quantum networks and protocols
+- **Quantum Key Distribution**: Implementation and analysis of QKD protocols
+
+## Framework Capabilities
+
+### Simulation
+- Linear Optics
+- State Evolution
+- Measurement
+- Noise Modeling
+
+### Hardware Support
+- Photon Sources
+- Beam Splitters
+- Phase Shifters
+- Detectors
+
+### Analysis Tools
+- Visualization
+- State Tomography
+- Process Tomography
+- Error Analysis
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js (v18 or higher)
+- Python (v3.9 or higher)
+- pip (for Python package management)
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/QbitsCode/Brisk.git
+cd Brisk
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install frontend dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Install Python backend dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Running the Application
 
-## Learn More
+1. Start the backend server:
+```bash
+python server/main.py
+```
 
-To learn more about Next.js, take a look at the following resources:
+2. In a new terminal, start the frontend development server:
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. Open your browser and navigate to `http://localhost:3000`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Development
 
-## Deploy on Vercel
+The application is built with:
+- Frontend: Next.js 14, React, TypeScript, Tailwind CSS
+- Backend: Python with FastAPI
+- Quantum Simulation: Custom quantum optics simulation engine
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Contributing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+Built by Qbits. All rights reserved.
+
+## Contact
+
+Project Link: [https://github.com/QbitsCode/Brisk](https://github.com/QbitsCode/Brisk)
