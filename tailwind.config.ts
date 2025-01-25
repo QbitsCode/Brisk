@@ -70,6 +70,15 @@ const config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      backgroundImage: {
+        'grid-pattern': `
+          linear-gradient(to right, #f0f0f0 1px, transparent 1px),
+          linear-gradient(to bottom, #f0f0f0 1px, transparent 1px)
+        `,
+      },
+      backgroundSize: {
+        'grid': '20px 20px',
+      },
     },
   },
   plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
