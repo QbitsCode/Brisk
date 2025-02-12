@@ -3,6 +3,6 @@ uvicorn>=0.24.0
 numpy>=1.23.0,<2.1
 scipy>=1.11.0
 pennylane>=0.33.0
-gdsfactory>=7.11.2
+gdsfactory==6.116.0
 networkx>=3.1
 matplotlib>=3.7.0
