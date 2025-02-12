@@ -1,281 +1,337 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { useDrag, useDrop } from 'react-dnd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { QuantumGate, Position, Connection, CircuitTemplate } from '@/types/quantum';
+import { QuantumGate, Position } from '@/types/quantum';
 import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
 import { SVGComponentLibrary } from './SVGComponentLibrary';
-import { ConnectionLine } from './ConnectionLine';
-import { QuantumStateViewer } from '../visualization/QuantumStateViewer';
-import { useQuantumSimulation } from '@/hooks/useQuantumSimulation';
-import { ComponentControls } from './ComponentControls';
+import '@/styles/quantum-animations.css';
 
 const GRID_SIZE = 20;
 
-interface DraggableGateProps {
-  gate: QuantumGate;
+// Utility function to group components by category
+function groupBy<T>(array: T[], key: keyof T): { [key: string]: T[] } {
+  return array.reduce((result, item) => {
+    const group = item[key] as string;
+    result[group] = result[group] || [];
+    result[group].push(item);
+    return result;
+  }, {} as { [key: string]: T[] });
+}
+
+const QUANTUM_COMPONENTS = [
+  {
+    id: 'single-photon-source',
+    name: 'Single Photon Source',
+    description: 'Generates single photons',
+    category: 'sources'
+  },
+  {
+    id: 'entangled-source',
+    name: 'Entangled Source',
+    description: 'Generates entangled photon pairs',
+    category: 'sources'
+  },
+  {
+    id: 'beamsplitter',
+    name: 'Beam Splitter',
+    description: '50:50 beam splitter',
+    category: 'interference'
+  },
+  {
+    id: 'polarizing-beamsplitter',
+    name: 'Polarizing Beam Splitter',
+    description: 'Splits photons based on polarization',
+    category: 'interference'
+  },
+  {
+    id: 'phaseshift',
+    name: 'Phase Shifter',
+    description: 'Adjusts the phase of photons',
+    category: 'manipulation'
+  },
+  {
+    id: 'waveplate',
+    name: 'Wave Plate',
+    description: 'Modifies photon polarization',
+    category: 'manipulation'
+  },
+  {
+    id: 'mirror',
+    name: 'Mirror',
+    description: 'Reflects photons',
+    category: 'routing'
+  },
+  {
+    id: 'fiber-coupler',
+    name: 'Fiber Coupler',
+    description: 'Couples photons into optical fibers',
+    category: 'routing'
+  },
+  {
+    id: 'detector',
+    name: 'Single Photon Detector',
+    description: 'Detects individual photons',
+    category: 'measurement'
+  }
+];
+
+interface DraggableComponentProps {
+  component: QuantumGate;
   onMove: (id: string, pos: Position) => void;
   onRotate: (id: string, angle: number) => void;
   onSelect: (id: string) => void;
   isSelected: boolean;
-  onStartConnection: (gateId: string, portType: 'input' | 'output') => void;
+  isActive: boolean;
 }
 
-const DraggableGate: React.FC<DraggableGateProps> = ({
-  gate,
+const DraggableComponent: React.FC<DraggableComponentProps> = ({
+  component,
   onMove,
   onRotate,
   onSelect,
   isSelected,
-  onStartConnection,
+  isActive
 }) => {
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: 'gate',
-    item: { id: gate.id, type: gate.type },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
-  }));
+  const [isDragging, setIsDragging] = useState(false);
+  const componentRef = useRef<HTMLDivElement>(null);
+
+  const handleDragStart = (e: React.DragEvent) => {
+    setIsDragging(true);
+    e.dataTransfer.setData('component', JSON.stringify({
+      id: component.id,
+      type: component.type,
+      currentPosition: component.position
+    }));
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  // Add laser beam effect for sources
+  const renderLaserBeam = () => {
+    if (!isActive || !['single-photon-source', 'entangled-source'].includes(component.type)) {
+      return null;
+    }
+
+    const isEntangled = component.type === 'entangled-source';
+    const beamLength = 300; // Length of the beam
+    const componentSize = 40; // Component size
+    const centerX = componentSize / 2; // Center X of component
+    const centerY = componentSize / 2; // Center Y of component
+    const beamStartX = centerX; // Start from center of component
+
+    return (
+      <svg
+        className="absolute top-0 left-0 pointer-events-none"
+        style={{
+          width: `${beamLength + componentSize}px`,
+          height: `${componentSize}px`,
+          transform: `rotate(${component.rotation}deg)`,
+          transformOrigin: `${centerX}px ${centerY}px`,
+        }}
+      >
+        {isEntangled ? (
+          <>
+            {/* First beam starting from center */}
+            <line
+              x1={beamStartX}
+              y1={centerY - 3}
+              x2={beamLength + centerX}
+              y2={centerY - 3}
+              className="laser-beam-entangled"
+            />
+            
+            {/* Second beam starting from center */}
+            <line
+              x1={beamStartX}
+              y1={centerY + 3}
+              x2={beamLength + centerX}
+              y2={centerY + 3}
+              className="laser-beam-entangled"
+            />
+          </>
+        ) : (
+          <line
+            x1={beamStartX}
+            y1={centerY}
+            x2={beamLength + centerX}
+            y2={centerY}
+            className="laser-beam"
+          />
+        )}
+      </svg>
+    );
+  };
 
   return (
-    <motion.div
-      ref={drag}
-      initial={{ scale: 0.9 }}
-      animate={{ 
-        scale: isSelected ? 1.1 : 1,
-        boxShadow: isSelected ? '0 0 10px rgba(59, 130, 246, 0.5)' : 'none'
-      }}
-      whileHover={{ scale: 1.05 }}
-      style={{
-        position: 'absolute',
-        left: gate.position.x,
-        top: gate.position.y,
-        cursor: 'move',
-        transform: `rotate(${gate.rotation || 0}deg)`,
-        opacity: isDragging ? 0.5 : 1,
-      }}
-      onClick={() => onSelect(gate.id)}
-      className={cn(
-        'w-12 h-12 rounded-lg bg-background border-2',
-        isSelected ? 'border-primary' : 'border-border',
-        isDragging ? 'opacity-50' : 'opacity-100'
-      )}
-    >
-      <SVGComponentLibrary type={gate.type} />
-      
-      {/* Connection ports */}
-      <div
-        className="absolute left-0 top-1/2 w-2 h-2 -ml-1 bg-primary rounded-full cursor-pointer"
-        onClick={(e) => {
-          e.stopPropagation();
-          onStartConnection(gate.id, 'input');
+    <>
+      <motion.div
+        ref={componentRef}
+        draggable
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        className={cn(
+          "quantum-component absolute cursor-grab active:cursor-grabbing component-appear",
+          `component-${component.type}`,
+          isSelected && "ring-2 ring-blue-500 ring-opacity-50",
+          isDragging && "dragging",
+          isActive && "active"
+        )}
+        initial={false}
+        animate={{ 
+          scale: isSelected ? 1.1 : 1,
+          rotate: component.rotation,
         }}
-      />
-      <div
-        className="absolute right-0 top-1/2 w-2 h-2 -mr-1 bg-primary rounded-full cursor-pointer"
-        onClick={(e) => {
-          e.stopPropagation();
-          onStartConnection(gate.id, 'output');
+        whileHover={{ scale: 1.05 }}
+        style={{
+          position: 'absolute',
+          left: component.position.x,
+          top: component.position.y,
+          width: 40,
+          height: 40,
         }}
-      />
-    </motion.div>
+        onClick={() => onSelect(component.id)}
+      >
+        <SVGComponentLibrary 
+          type={component.type} 
+          isActive={isActive}
+          className="w-full h-full"
+        />
+      </motion.div>
+      {renderLaserBeam()}
+    </>
   );
 };
 
 export function QuantumCircuit({ className }: { className?: string }) {
-  const [gates, setGates] = useState<QuantumGate[]>([]);
-  const [selectedGate, setSelectedGate] = useState<string | null>(null);
-  const [connections, setConnections] = useState<Connection[]>([]);
-  const [connectionStart, setConnectionStart] = useState<{
-    gateId: string;
-    portType: 'input' | 'output';
-  } | null>(null);
+  const [components, setComponents] = useState<QuantumGate[]>([]);
+  const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
+  const [activeComponents, setActiveComponents] = useState<Set<string>>(new Set());
   const circuitRef = useRef<HTMLDivElement>(null);
-  const { simulationResults, isSimulating, error, runSimulation } = useQuantumSimulation();
 
-  const handleUpdateParameters = (id: string, params: Record<string, number>) => {
-    setGates(gates.map(gate =>
-      gate.id === id ? { ...gate, parameters: params } : gate
-    ));
-  };
+  // Add effect to simulate photon propagation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveComponents(prev => {
+        const newActive = new Set(prev);
+        components.forEach(comp => {
+          if (comp.type.includes('source')) {
+            newActive.add(comp.id);
+          }
+        });
+        return newActive;
+      });
+    }, 2000);
 
-  const handleDeleteGate = (id: string) => {
-    setGates(gates.filter(gate => gate.id !== id));
-    setConnections(connections.filter(conn => 
-      conn.sourceId !== id && conn.targetId !== id
-    ));
-    setSelectedGate(null);
-  };
+    return () => clearInterval(interval);
+  }, [components]);
 
-  const [, drop] = useDrop(() => ({
-    accept: 'gate',
-    drop: (item: any, monitor) => {
-      const delta = monitor.getDifferenceFromInitialOffset();
-      const offset = monitor.getClientOffset();
-      
-      if (delta && offset && circuitRef.current) {
-        const rect = circuitRef.current.getBoundingClientRect();
-        const x = Math.round((offset.x - rect.left) / GRID_SIZE) * GRID_SIZE;
-        const y = Math.round((offset.y - rect.top) / GRID_SIZE) * GRID_SIZE;
-        
-        handleGateDrag(item.id, { x, y });
-      }
-    },
-  }));
-
-  const handleGateDrag = (id: string, newPosition: Position) => {
-    setGates(gates.map(gate =>
-      gate.id === id ? { ...gate, position: newPosition } : gate
-    ));
-  };
-
-  const handleGateRotate = (id: string, angle: number) => {
-    setGates(gates.map(gate =>
-      gate.id === id ? { ...gate, rotation: (gate.rotation || 0) + angle } : gate
-    ));
-  };
-
-  const handleStartConnection = (gateId: string, portType: 'input' | 'output') => {
-    setConnectionStart({ gateId, portType });
-  };
-
-  const handleCompleteConnection = (gateId: string) => {
-    if (connectionStart && connectionStart.gateId !== gateId) {
-      const newConnection: Connection = {
-        sourceId: connectionStart.portType === 'output' ? connectionStart.gateId : gateId,
-        targetId: connectionStart.portType === 'output' ? gateId : connectionStart.gateId,
-        sourcePort: 'output',
-        targetPort: 'input',
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const data = JSON.parse(e.dataTransfer.getData('component'));
+    const rect = circuitRef.current?.getBoundingClientRect();
+    
+    if (rect) {
+      const position = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
       };
-      setConnections([...connections, newConnection]);
+      
+      // If it's a new component
+      if (!data.currentPosition) {
+        const id = `${data.type}-${Date.now()}`;
+        setComponents(prev => [...prev, {
+          id,
+          type: data.type,
+          position,
+          rotation: 0,
+          params: {}
+        }]);
+      } 
+      // If it's an existing component being moved
+      else {
+        setComponents(prev => prev.map(comp => 
+          comp.id === data.id ? { ...comp, position } : comp
+        ));
+      }
     }
-    setConnectionStart(null);
   };
 
-  const addGate = (type: QuantumGate['type']) => {
-    const newGate: QuantumGate = {
-      id: `gate-${Date.now()}`,
-      type,
-      position: { x: 50, y: 50 },
-      rotation: 0,
-    };
-    setGates([...gates, newGate]);
-    setSelectedGate(newGate.id);
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleComponentMove = (id: string, newPosition: Position) => {
+    setComponents(prev => prev.map(comp => 
+      comp.id === id ? { ...comp, position: newPosition } : comp
+    ));
+  };
+
+  const handleComponentRotate = (id: string, angle: number) => {
+    setComponents(prev => prev.map(comp =>
+      comp.id === id ? { ...comp, rotation: angle } : comp
+    ));
   };
 
   return (
-    <div className={cn("grid gap-4", className)}>
-      <div className="flex items-center gap-2 bg-accent/50 rounded-lg p-2">
-        <Tooltip content="Add Photon Source">
-          <Button
-            onClick={() => addGate('source')}
-            variant="outline"
-            size="icon"
-            className="w-10 h-10"
-          >
-            <SVGComponentLibrary type="source" />
-          </Button>
-        </Tooltip>
-        <Tooltip content="Add Beam Splitter">
-          <Button
-            onClick={() => addGate('beamsplitter')}
-            variant="outline"
-            size="icon"
-            className="w-10 h-10"
-          >
-            <SVGComponentLibrary type="beamsplitter" />
-          </Button>
-        </Tooltip>
-        <Tooltip content="Add Phase Shift">
-          <Button
-            onClick={() => addGate('phaseshift')}
-            variant="outline"
-            size="icon"
-            className="w-10 h-10"
-          >
-            <SVGComponentLibrary type="phaseshift" />
-          </Button>
-        </Tooltip>
-        <Tooltip content="Add Detector">
-          <Button
-            onClick={() => addGate('detector')}
-            variant="outline"
-            size="icon"
-            className="w-10 h-10"
-          >
-            <SVGComponentLibrary type="detector" />
-          </Button>
-        </Tooltip>
+    <div className={cn("flex h-full", className)}>
+      <div className="w-64 bg-card p-4 border-r">
+        <h3 className="text-lg font-medium mb-4">Components</h3>
+        <div className="space-y-4">
+          {Object.entries(groupBy(QUANTUM_COMPONENTS, 'category')).map(([category, items]) => (
+            <div key={category}>
+              <h4 className="text-sm font-medium text-muted-foreground mb-2 capitalize">
+                {category}
+              </h4>
+              <div className="grid grid-cols-2 gap-2">
+                {items.map((item) => (
+                  <Tooltip key={item.id} content={item.description}>
+                    <div
+                      draggable
+                      className={cn(
+                        "quantum-component w-12 h-12 rounded-lg bg-background/50 p-2 cursor-grab",
+                        "hover:bg-accent/50 transition-colors border component-appear",
+                        `component-${item.id}`
+                      )}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('component', JSON.stringify({
+                          type: item.id
+                        }));
+                      }}
+                    >
+                      <SVGComponentLibrary type={item.id} />
+                    </div>
+                  </Tooltip>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div
-        ref={drop}
-        className="relative w-full h-[600px] border-2 border-dashed border-border rounded-lg bg-grid-pattern"
+      <div 
+        ref={circuitRef}
+        className="flex-1 relative bg-background/50 border rounded-lg m-4"
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
       >
-        <svg className="absolute inset-0 w-full h-full pointer-events-none">
-          {connections.map((conn, idx) => {
-            const sourceGate = gates.find(g => g.id === conn.sourceId);
-            const targetGate = gates.find(g => g.id === conn.targetId);
-            
-            if (sourceGate && targetGate) {
-              return (
-                <ConnectionLine
-                  key={idx}
-                  connection={conn}
-                  sourcePosition={{
-                    x: sourceGate.position.x + 48, // Add width of gate
-                    y: sourceGate.position.y + 24, // Add half height
-                  }}
-                  targetPosition={{
-                    x: targetGate.position.x,
-                    y: targetGate.position.y + 24,
-                  }}
-                />
-              );
-            }
-            return null;
-          })}
-        </svg>
-
         <AnimatePresence>
-          {gates.map((gate) => (
-            <DraggableGate
-              key={gate.id}
-              gate={gate}
-              onMove={handleGateDrag}
-              onRotate={handleGateRotate}
-              onSelect={setSelectedGate}
-              isSelected={gate.id === selectedGate}
-              onStartConnection={handleStartConnection}
+          {components.map((component) => (
+            <DraggableComponent
+              key={component.id}
+              component={component}
+              onMove={handleComponentMove}
+              onRotate={handleComponentRotate}
+              onSelect={setSelectedComponent}
+              isSelected={selectedComponent === component.id}
+              isActive={activeComponents.has(component.id)}
             />
           ))}
         </AnimatePresence>
       </div>
-
-      <div className="flex justify-between p-4 bg-muted rounded-lg">
-        <Button
-          onClick={() => runSimulation(gates, connections)}
-          variant="default"
-          disabled={isSimulating}
-        >
-          {isSimulating ? 'Simulating...' : 'Run Simulation'}
-        </Button>
-      </div>
-
-      {error && (
-        <div className="p-4 bg-destructive/10 text-destructive rounded-lg">
-          {error}
-        </div>
-      )}
-
-      {simulationResults && (
-        <QuantumStateViewer
-          stateVector={simulationResults.stateVector}
-          probabilities={simulationResults.probabilities}
-          blochSphere={simulationResults.blochSphere}
-        />
-      )}
     </div>
   );
 }
