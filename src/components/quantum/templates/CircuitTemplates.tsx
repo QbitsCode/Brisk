@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CircuitTemplate } from '@/types/quantum';
+import { QuantumPopup } from '@/components/QuantumExplanations';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { InfoIcon } from 'lucide-react';
 
 interface CircuitTemplatesProps {
   onSelectTemplate: (template: CircuitTemplate) => void;
@@ -211,51 +214,76 @@ const templates: CircuitTemplate[] = [
 ];
 
 export function CircuitTemplates({ onSelectTemplate }: CircuitTemplatesProps) {
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [selectedConcept, setSelectedConcept] = useState<'hom' | 'mzi'>('hom');
+
   return (
-    <div className="p-6 border rounded-lg bg-card">
-      <h3 className="text-xl font-medium mb-4">Templates</h3>
-      <div className="space-y-4">
-        {templates.map((template) => (
-          <div
-            key={template.id}
-            className="p-4 rounded-lg border bg-background/50 hover:bg-accent/50 transition-colors cursor-pointer"
-            onClick={() => onSelectTemplate(template)}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-lg font-medium">{template.name}</h4>
-              <span
-                className={`px-2 py-1 text-xs rounded-full ${
-                  template.difficulty === 'beginner'
-                    ? 'bg-green-500/20 text-green-500'
-                    : 'bg-blue-500/20 text-blue-500'
-                }`}
-              >
-                {template.difficulty}
-              </span>
-            </div>
-            {template.thumbnail && (
-              <div className="bg-background rounded-md p-4 mb-4 border">
-                <img
-                  src={template.thumbnail}
-                  alt={template.name}
-                  className="w-full h-32 object-contain"
-                />
-              </div>
-            )}
-            <Button
-              variant="secondary"
-              size="sm"
-              className="w-full"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelectTemplate(template);
-              }}
+    <TooltipProvider>
+      <div className="p-6 border rounded-lg bg-card">
+        <h3 className="text-xl font-medium mb-4">Templates</h3>
+        <div className="space-y-4">
+          {templates.map((template) => (
+            <div
+              key={template.id}
+              className="p-4 rounded-lg border bg-background/50 hover:bg-accent/50 transition-colors cursor-pointer"
+              onClick={() => onSelectTemplate(template)}
             >
-              Use Template
-            </Button>
-          </div>
-        ))}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-lg font-medium">{template.name}</h4>
+                  <Tooltip content="Click for detailed explanation">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedConcept(template.id === 'hom-interference' ? 'hom' : 'mzi');
+                        setIsPopupOpen(true);
+                      }}
+                      className="inline-flex items-center justify-center rounded-full w-5 h-5 text-xs border border-border hover:bg-accent"
+                    >
+                      ⓘ
+                    </button>
+                  </Tooltip>
+                </div>
+                <span
+                  className={`px-2 py-1 text-xs rounded-full ${
+                    template.difficulty === 'beginner'
+                      ? 'bg-green-500/20 text-green-500'
+                      : 'bg-blue-500/20 text-blue-500'
+                  }`}
+                >
+                  {template.difficulty}
+                </span>
+              </div>
+              {template.thumbnail && (
+                <div className="bg-background rounded-md p-4 mb-4 border">
+                  <img
+                    src={template.thumbnail}
+                    alt={template.name}
+                    className="w-full h-32 object-contain"
+                  />
+                </div>
+              )}
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectTemplate(template);
+                }}
+              >
+                Use Template
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        <QuantumPopup
+          isOpen={isPopupOpen}
+          onClose={() => setIsPopupOpen(false)}
+          concept={selectedConcept}
+        />
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

@@ -52,6 +52,50 @@ export function MainNav() {
           Examples
         </Link>
         <Link
+          href="/quantum"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname?.startsWith("/quantum")
+              ? "text-foreground"
+              : "text-foreground/60"
+          )}
+        >
+          Quantum
+        </Link>
+        <Link
+          href="/photonics"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname?.startsWith("/photonics")
+              ? "text-foreground"
+              : "text-foreground/60"
+          )}
+        >
+          Photonics
+        </Link>
+        <Link
+          href="/perceval"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname?.startsWith("/perceval")
+              ? "text-foreground"
+              : "text-foreground/60"
+          )}
+        >
+          Perceval
+        </Link>
+        <Link
+          href="/photonic-chip"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname?.startsWith("/photonic-chip")
+              ? "text-foreground"
+              : "text-foreground/60"
+          )}
+        >
+          Chip
+        </Link>
+        <Link
           href="/github"
           className={cn(
             "hidden text-foreground/60 transition-colors hover:text-foreground/80 lg:block"

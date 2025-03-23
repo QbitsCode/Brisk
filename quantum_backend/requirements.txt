@@ -6,3 +6,4 @@ pennylane>=0.33.0
 gdsfactory==6.116.0
 networkx>=3.1
 matplotlib>=3.7.0
+perceval-quandela>=0.10.0
