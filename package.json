@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "export": "next export",
+    "deploy": "next build && touch out/.nojekyll"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
