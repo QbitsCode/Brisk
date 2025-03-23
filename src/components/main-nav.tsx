@@ -30,28 +30,6 @@ export function MainNav() {
           Documentation
         </Link>
         <Link
-          href="/components"
-          className={cn(
-            "transition-colors hover:text-foreground/80",
-            pathname?.startsWith("/components")
-              ? "text-foreground"
-              : "text-foreground/60"
-          )}
-        >
-          Components
-        </Link>
-        <Link
-          href="/examples"
-          className={cn(
-            "transition-colors hover:text-foreground/80",
-            pathname?.startsWith("/examples")
-              ? "text-foreground"
-              : "text-foreground/60"
-          )}
-        >
-          Examples
-        </Link>
-        <Link
           href="/quantum"
           className={cn(
             "transition-colors hover:text-foreground/80",
@@ -96,7 +74,9 @@ export function MainNav() {
           Chip
         </Link>
         <Link
-          href="/github"
+          href="https://github.com/QbitsCode"
+          target="_blank"
+          rel="noreferrer"
           className={cn(
             "hidden text-foreground/60 transition-colors hover:text-foreground/80 lg:block"
           )}
