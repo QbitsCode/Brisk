@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Remove 'output: export' for Vercel deployment
   images: { unoptimized: true },
-  // Remove basePath and assetPrefix for Netlify
+  // Remove basePath and assetPrefix for Vercel
   // basePath: '/Brisk',
   // assetPrefix: '/Brisk/',
   webpack: (config, { isServer }) => {

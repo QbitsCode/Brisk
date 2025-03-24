@@ -17,7 +17,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://*.netlify.app", "*"],
+    allow_origins=["http://localhost:3000", "https://brisk-quantum.vercel.app", "https://*.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -702,11 +702,6 @@ def execute_gdsfactory(request: GDSFactoryCodeRequest):
     Execute GDSFactory quantum photonic chip design code and return results
     """
     return execute_gdsfactory_code(request.code)
-
-# Health check route for Netlify
-@app.get("/health")
-def health_check():
-    return {"status": "ok", "service": "quantum-backend"}
 
 if __name__ == "__main__":
     import uvicorn

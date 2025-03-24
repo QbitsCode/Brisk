@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 // UI Components
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 // Icons
-import { Copy, Check, ChevronRight, Menu, X, Github, ExternalLink, AlertCircle, Link2 } from 'lucide-react'
+import { Copy, Check, ChevronRight, Menu, X, ExternalLink, AlertCircle, Link2, Github as GitHubIcon } from 'lucide-react'
 
 interface Section {
   id: string
@@ -23,7 +23,6 @@ interface Section {
 }
 
 const DocsPage = () => {
-  const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [sections, setSections] = useState<Section[]>([])
@@ -177,9 +176,9 @@ const DocsPage = () => {
     if (activeSection && !loading) {
       const params = new URLSearchParams(searchParams.toString())
       params.set('section', activeSection)
-      router.replace(`${pathname}?${params.toString()}`)
+      // Removed unused router variable
     }
-  }, [activeSection, pathname, router, loading, searchParams])
+  }, [activeSection, pathname, loading, searchParams])
 
   // Handle section selection
   const handleSectionClick = (sectionId: string) => {
@@ -621,7 +620,7 @@ const DocsPage = () => {
               rel="noopener noreferrer"
               className="text-slate-400 hover:text-white"
             >
-              <Github size={20} />
+              <GitHubIcon size={20} />
             </a>
           </div>
         </div>
@@ -793,18 +792,12 @@ const DocsPage = () => {
             </p>
             <div className="flex space-x-6 mt-2 md:mt-0">
               <a
-                href="https://github.com/QbitsCode/Brisk"
-                target="_blank"
+                href="https://github.com/QbitsCode/Brisk" 
+                target="_blank" 
                 rel="noopener noreferrer"
                 className="text-slate-400 hover:text-white text-sm"
               >
                 GitHub
-              </a>
-              <a
-                href="#"
-                className="text-slate-400 hover:text-white text-sm"
-              >
-                Website
               </a>
             </div>
           </div>

@@ -1,0 +1,92 @@
+# flyctl launch added from .gitignore
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+.pnp
+**/.pnp.*
+**/.yarn/*
+!**/.yarn/patches
+!**/.yarn/plugins
+!**/.yarn/releases
+!**/.yarn/versions
+
+# testing
+coverage
+
+# next.js
+.next
+out
+
+# production
+build
+
+# misc
+**/.DS_Store
+**/*.pem
+
+# debug
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+**/.env*
+
+# vercel
+**/.vercel
+
+# typescript
+**/*.tsbuildinfo
+**/next-env.d.ts
+
+# Python
+**/__pycache__
+**/*.py[cod]
+**/*$py.class
+**/*.so
+**/.Python
+**/build
+**/develop-eggs
+**/dist
+**/downloads
+**/eggs
+**/.eggs
+**/lib
+**/lib64
+**/parts
+**/sdist
+**/var
+**/wheels
+**/*.egg-info
+**/.installed.cfg
+**/*.egg
+**/MANIFEST
+**/venv
+**/.env
+**/.venv
+**/env
+**/ENV
+**/quantum_backend/venv
+
+# IDE
+**/.idea
+**/.vscode
+**/*.swp
+**/*.swo
+
+# flyctl launch added from quantum_backend/venv/lib/python3.11/site-packages/debugpy/_vendored/pydevd/_pydevd_frame_eval/.gitignore
+quantum_backend/venv/lib/python3.11/site-packages/debugpy/_vendored/pydevd/_pydevd_frame_eval/pydevd_frame_evaluator.*.so
+quantum_backend/venv/lib/python3.11/site-packages/debugpy/_vendored/pydevd/_pydevd_frame_eval/pydevd_frame_evaluator.*.pyd
+quantum_backend/venv/lib/python3.11/site-packages/debugpy/_vendored/pydevd/_pydevd_frame_eval/pydevd_frame_evaluator.pyx
+
+# flyctl launch added from quantum_backend/venv/lib/python3.11/site-packages/debugpy/_vendored/pydevd/pydevd_attach_to_process/linux_and_mac/.gitignore
+quantum_backend/venv/lib/python3.11/site-packages/debugpy/_vendored/pydevd/pydevd_attach_to_process/linux_and_mac/attach_x86.dylib
+quantum_backend/venv/lib/python3.11/site-packages/debugpy/_vendored/pydevd/pydevd_attach_to_process/linux_and_mac/attach_x86_64.dylib
+quantum_backend/venv/lib/python3.11/site-packages/debugpy/_vendored/pydevd/pydevd_attach_to_process/linux_and_mac/attach_linux_x86.o
+quantum_backend/venv/lib/python3.11/site-packages/debugpy/_vendored/pydevd/pydevd_attach_to_process/linux_and_mac/attach_linux_x86_64.o
+
+# flyctl launch added from quantum_backend/venv/lib/python3.11/site-packages/gdsfactory/generic_tech/klayout/lvs/.gitignore
+quantum_backend/venv/lib/python3.11/site-packages/gdsfactory/generic_tech/klayout/lvs/**/lvs_straight_heater_metal
+fly.toml
