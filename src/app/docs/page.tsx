@@ -22,8 +22,27 @@ interface Section {
   subsections?: { id: string; title: string; content: string[] }[]
 }
 
-// Create a client component that uses searchParams
-function DocsContent() {
+// Main component with client-side only rendering
+const DocsPage = () => {
+  const [isMounted, setIsMounted] = useState(false);
+  
+  // Only access hooks after component is mounted (client-side)
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
+  // Return early with a loading state if not mounted
+  if (!isMounted) {
+    return <div className="flex items-center justify-center min-h-screen">Loading documentation...</div>;
+  }
+  
+  return (
+    <ClientDocsContent />
+  );
+};
+
+// Client component that safely uses all hooks
+function ClientDocsContent() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [sections, setSections] = useState<Section[]>([])
@@ -813,15 +832,6 @@ function DocsContent() {
         </div>
       )}
     </div>
-  )
-}
-
-// Main page component with Suspense boundary
-const DocsPage = () => {
-  return (
-    <Suspense fallback={<div>Loading documentation...</div>}>
-      <DocsContent />
-    </Suspense>
   )
 }
 
