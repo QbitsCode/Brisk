@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
@@ -22,7 +22,8 @@ interface Section {
   subsections?: { id: string; title: string; content: string[] }[]
 }
 
-const DocsPage = () => {
+// Create a client component that uses searchParams
+function DocsContent() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [sections, setSections] = useState<Section[]>([])
@@ -812,6 +813,15 @@ const DocsPage = () => {
         </div>
       )}
     </div>
+  )
+}
+
+// Main page component with Suspense boundary
+const DocsPage = () => {
+  return (
+    <Suspense fallback={<div>Loading documentation...</div>}>
+      <DocsContent />
+    </Suspense>
   )
 }
 
