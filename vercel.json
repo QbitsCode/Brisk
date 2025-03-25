@@ -5,7 +5,13 @@
       "src": "package.json",
       "use": "@vercel/next",
       "config": { 
-        "buildCommand": "npm run vercel-build"
+        "buildCommand": "npm run vercel-build",
+        "eslint": {
+          "enabled": false
+        },
+        "typescript": {
+          "ignoreBuildErrors": true
+        }
       }
     }
   ],

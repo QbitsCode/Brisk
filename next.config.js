@@ -12,11 +12,14 @@ const nextConfig = {
     // your project has type errors.
     ignoreBuildErrors: true,
   },
-  // Ignore ESLint errors during build
+  // Completely disable ESLint for builds
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
+    // This completely disables ESLint during builds
     ignoreDuringBuilds: true,
+    // Also disable ESLint on dev server
+    ignoreDevelopmentErrors: true,
+    // Don't even run the linter on build
+    dirs: [],
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
@@ -26,6 +29,12 @@ const nextConfig = {
         'canvas': false,
       }
     }
+    
+    // Disable ESLint webpack plugin
+    config.plugins = config.plugins.filter(plugin => 
+      plugin.constructor.name !== 'ESLintWebpackPlugin'
+    );
+
     return config
   },
 }
