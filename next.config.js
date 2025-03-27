@@ -1,32 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configure images for dynamic application
+  // Set output to 'standalone' for better Vercel compatibility
+  output: 'standalone',
+  // Configure images to be completely unoptimized for maximum compatibility
   images: { 
     unoptimized: true,
-    domains: ['brisk-eslint-q0lpekz03-qblocks-projects.vercel.app'],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
+    domains: ['*'],
   },
-  // Keep output configuration dynamic (not 'export')
-  assetPrefix: process.env.NODE_ENV === 'production' ? undefined : undefined,
+  // Disable assetPrefix for Vercel deployments
+  assetPrefix: undefined,
   // Ignore TypeScript errors during build
   typescript: {
-    // !! WARN !!
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
     ignoreBuildErrors: true,
   },
   // Completely disable ESLint for builds
   eslint: {
-    // This completely disables ESLint during builds
     ignoreDuringBuilds: true,
-    // Also disable ESLint on dev server
     ignoreDevelopmentErrors: true,
-    // Don't even run the linter on build
     dirs: [],
   },
   webpack: (config, { isServer }) => {

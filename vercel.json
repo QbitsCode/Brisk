@@ -3,25 +3,11 @@
   "builds": [
     {
       "src": "package.json",
-      "use": "@vercel/next",
-      "config": { 
-        "buildCommand": "npm run vercel-build",
-        "eslint": {
-          "enabled": false
-        },
-        "typescript": {
-          "ignoreBuildErrors": true
-        },
-        "outputDirectory": ".next"
-      }
+      "use": "@vercel/next"
     }
   ],
   "routes": [
-    { "src": "/_next/static/(.*)", "dest": "/_next/static/$1", "headers": { "cache-control": "public, max-age=31536000, immutable" } },
-    { "src": "/static/(.*)", "dest": "/static/$1", "headers": { "cache-control": "public, max-age=31536000, immutable" } },
-    { "src": "/images/(.*)", "dest": "/images/$1", "headers": { "cache-control": "public, max-age=86400" } },
-    { "src": "/public/(.*)", "dest": "/public/$1", "headers": { "cache-control": "public, max-age=86400" } },
-    { "src": "/favicon.ico", "dest": "/favicon.ico", "headers": { "cache-control": "public, max-age=86400" } },
+    { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/" }
   ]
 }
