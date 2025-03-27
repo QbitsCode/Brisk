@@ -11,11 +11,14 @@
         },
         "typescript": {
           "ignoreBuildErrors": true
-        }
+        },
+        "outputDirectory": ".next"
       }
     }
   ],
   "routes": [
+    { "src": "/_next/static/(.*)", "dest": "/_next/static/$1", "headers": { "cache-control": "public, max-age=31536000, immutable" } },
+    { "src": "/static/(.*)", "dest": "/static/$1", "headers": { "cache-control": "public, max-age=31536000, immutable" } },
     { "src": "/(.*)", "dest": "/" }
   ]
 }

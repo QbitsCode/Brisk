@@ -1,10 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Remove 'output: export' for Vercel deployment
-  images: { unoptimized: true },
-  // Remove basePath and assetPrefix for Vercel
-  // basePath: '/Brisk',
-  // assetPrefix: '/Brisk/',
+  images: { 
+    unoptimized: true,
+    domains: ['brisk-eslint-no67x5utw-qblocks-projects.vercel.app'],
+  },
+  // Proper asset configuration for Vercel
+  assetPrefix: process.env.NODE_ENV === 'production' ? undefined : undefined,
   // Ignore TypeScript errors during build
   typescript: {
     // !! WARN !!
