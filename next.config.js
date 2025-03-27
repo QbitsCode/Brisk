@@ -1,11 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remove 'output: export' for Vercel deployment
+  // Configure images for dynamic application
   images: { 
     unoptimized: true,
-    domains: ['brisk-eslint-no67x5utw-qblocks-projects.vercel.app'],
+    domains: ['brisk-eslint-q0lpekz03-qblocks-projects.vercel.app'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
-  // Proper asset configuration for Vercel
+  // Keep output configuration dynamic (not 'export')
   assetPrefix: process.env.NODE_ENV === 'production' ? undefined : undefined,
   // Ignore TypeScript errors during build
   typescript: {
