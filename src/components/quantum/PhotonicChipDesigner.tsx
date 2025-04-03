@@ -15,7 +15,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { CircuitExporter, CircuitValidator } from '@/lib/circuit-utils';
-import { Component, Connection, CircuitTemplate } from '@/types/photonic';
+import { 
+  ComponentParams as PhotonicComponentParams,
+  Component as PhotonicComponent, 
+  Connection as PhotonicConnection,
+  CircuitTemplate as PhotonicCircuitTemplate 
+} from '@/types/photonic'
 import { useToast } from "@/components/ui/use-toast";
 import PredefinedCircuits from './examples/PredefinedCircuits';
 import TutorialOverlay from './tutorial/TutorialOverlay';
@@ -30,38 +35,38 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface ComponentParams {
-  [key: string]: number;
+interface LocalComponentParams {
+  [key: string]: string | number;
 }
 
-interface Component {
+interface LocalComponent {
   id: string;
   type: string;
   x: number;
   y: number;
-  rotation: number;
-  params: ComponentParams;
-  ports: {
-    input?: { x: number; y: number };
-    output?: { x: number; y: number };
-    through?: { x: number; y: number };
-    drop?: { x: number; y: number };
-    o1?: { x: number; y: number };
-    o2?: { x: number; y: number };
-    o3?: { x: number; y: number };
-    o4?: { x: number; y: number };
-  };
+  rotation: number;  
+  params: LocalComponentParams;
+  ports: Record<string, { x: number; y: number }>;
 }
 
-interface Connection {
+interface LocalConnection {
   source: { component: number; port: string };
   target: { component: number; port: string };
 }
 
-interface CircuitTemplate {
+interface LocalCircuitTemplate {
+  id: string;
   name: string;
-  components: Component[];
-  connections: Connection[];
+  description: string;
+  components: {
+    type: string;
+    x: number;
+    y: number;
+    rotation?: number;
+    params: { [key: string]: string | number };
+    ports?: Record<string, { x: number; y: number }>;
+  }[];
+  connections: LocalConnection[];
 }
 
 const COMPONENT_TYPES = {
@@ -285,12 +290,13 @@ const LAYER_STACK = [
   { value: 5, label: 'Metal 1', color: '#a3a3a3' }
 ];
 
-const PREDEFINED_CIRCUITS: CircuitTemplate[] = [
+const PREDEFINED_CIRCUITS: LocalCircuitTemplate[] = [
   {
+    id: '1',
     name: 'Simple Circuit',
+    description: 'A simple circuit',
     components: [
       {
-        id: '1',
         type: 'straight',
         x: 100,
         y: 100,
@@ -299,7 +305,6 @@ const PREDEFINED_CIRCUITS: CircuitTemplate[] = [
         ports: {}
       },
       {
-        id: '2',
         type: 'bend_circular',
         x: 200,
         y: 200,
@@ -315,10 +320,10 @@ const PREDEFINED_CIRCUITS: CircuitTemplate[] = [
 ];
 
 export default function PhotonicChipDesigner() {
-  const [components, setComponents] = useState<Component[]>([]);
-  const [connections, setConnections] = useState<Connection[]>([]);
-  const [selectedComponent, setSelectedComponent] = useState<Component | null>(null);
-  const [connecting, setConnecting] = useState<{ component: Component; port: string } | null>(null);
+  const [components, setComponents] = useState<PhotonicComponent[]>([]);
+  const [connections, setConnections] = useState<PhotonicConnection[]>([]);
+  const [selectedComponent, setSelectedComponent] = useState<PhotonicComponent | null>(null);
+  const [connecting, setConnecting] = useState<{ component: PhotonicComponent; port: string } | null>(null);
   const [dragging, setDragging] = useState<{ id: string; offsetX: number; offsetY: number } | null>(null);
   const [showParams, setShowParams] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -329,7 +334,7 @@ export default function PhotonicChipDesigner() {
 
   const addComponent = (type: keyof typeof COMPONENT_TYPES) => {
     const componentType = COMPONENT_TYPES[type];
-    const newComponent: Component = {
+    const newComponent: PhotonicComponent = {
       id: Math.random().toString(36).substr(2, 9),
       type,
       x: Math.random() * 600 + 100,
@@ -353,7 +358,7 @@ export default function PhotonicChipDesigner() {
     });
   };
 
-  const updateComponentParams = (component: Component, params: ComponentParams) => {
+  const updateComponentParams = (component: PhotonicComponent, params: Partial<PhotonicComponentParams>) => {
     setComponents(prev =>
       prev.map(c =>
         c.id === component.id
@@ -365,7 +370,7 @@ export default function PhotonicChipDesigner() {
 
   const drawComponent = (
     ctx: CanvasRenderingContext2D,
-    component: Component,
+    component: PhotonicComponent,
     isSelected: boolean = false
   ) => {
     const radius = 25;
@@ -414,7 +419,7 @@ export default function PhotonicChipDesigner() {
       ctx.fill();
       
       // Store port position for connections
-      component.ports[port as keyof Component['ports']] = {
+      component.ports[port as keyof PhotonicComponent['ports']] = {
         x: component.x + x,
         y: component.y + y
       };
@@ -426,6 +431,7 @@ export default function PhotonicChipDesigner() {
     ctx.fillStyle = '#9ca3af';
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
     ctx.fillText(
       componentType?.name || 'Unknown',
       component.x,
@@ -448,37 +454,294 @@ export default function PhotonicChipDesigner() {
 
   const draw = () => {
     const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
-
-    // Clear canvas
-    ctx.fillStyle = '#18181b';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw connections
-    connections.forEach(conn => {
-      const source = components[conn.source.component];
-      const target = components[conn.target.component];
-      if (source && target) {
-        drawConnection(ctx, source.ports[conn.source.port], target.ports[conn.target.port]);
-      }
-    });
-
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Use our enhanced drawing function for better visualization
+    drawCircuit(ctx);
+    
     // Draw temporary connection line
     if (connecting) {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = lastMousePos.x - rect.left;
-      const mouseY = lastMousePos.y - rect.top;
-      drawConnection(ctx, connecting.component.ports[connecting.port], { x: mouseX, y: mouseY });
+      const sourceComponent = components.find(c => c.id === `component-${connecting.component.id}`);
+      if (sourceComponent) {
+        const portName = connecting.port;
+        const port = sourceComponent.ports[portName];
+        
+        if (port) {
+          // Draw line from port to current mouse position
+          ctx.beginPath();
+          ctx.moveTo(port.x, port.y);
+          ctx.lineTo(lastMousePos.x, lastMousePos.y);
+          ctx.strokeStyle = '#f59e0b'; // Amber for connection in progress
+          ctx.setLineDash([5, 3]); // Dashed line
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.setLineDash([]); // Reset dash
+        }
+      }
     }
+  };
 
+  const drawCircuit = (ctx: CanvasRenderingContext2D) => {
+    ctx.clearRect(0, 0, 800, 600);
+    
+    // Draw connections
+    connections.forEach(connection => {
+      const sourceComponent = components.find(c => c.id === `component-${connection.source.component}`);
+      const targetComponent = components.find(c => c.id === `component-${connection.target.component}`);
+      
+      if (sourceComponent && targetComponent) {
+        // Get source port coordinates
+        let sourceX = sourceComponent.x;
+        let sourceY = sourceComponent.y;
+        const sourcePort = sourceComponent.ports[connection.source.port];
+        if (sourcePort) {
+          sourceX = sourcePort.x;
+          sourceY = sourcePort.y;
+        }
+        
+        // Get target port coordinates
+        let targetX = targetComponent.x;
+        let targetY = targetComponent.y;
+        const targetPort = targetComponent.ports[connection.target.port];
+        if (targetPort) {
+          targetX = targetPort.x;
+          targetY = targetPort.y;
+        }
+        
+        // Draw connection
+        ctx.beginPath();
+        
+        // Draw direct line or bezier depending on position
+        if (Math.abs(sourceX - targetX) < 20 || Math.abs(sourceY - targetY) < 20) {
+          // Direct line for nearby components
+          ctx.moveTo(sourceX, sourceY);
+          ctx.lineTo(targetX, targetY);
+        } else {
+          // Bezier curve for distant components
+          ctx.moveTo(sourceX, sourceY);
+          // Calculate control points
+          const midX = (sourceX + targetX) / 2;
+          const midY = (sourceY + targetY) / 2;
+          ctx.quadraticCurveTo(midX, sourceY, midX, midY);
+          ctx.quadraticCurveTo(midX, targetY, targetX, targetY);
+        }
+        
+        ctx.strokeStyle = "#3b82f6"; // Blue color for waveguides
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    });
+    
     // Draw components
     components.forEach(component => {
-      drawComponent(
-        ctx,
-        component,
-        connecting?.component.id === component.id || selectedComponent?.id === component.id
-      );
+      const x = component.x;
+      const y = component.y;
+      
+      // Determine the component type and draw accordingly
+      const type = component.type.toLowerCase();
+      
+      ctx.save();
+      ctx.translate(x, y);
+      
+      if (component.rotation) {
+        ctx.rotate(component.rotation * Math.PI / 180);
+      }
+      
+      // Default styles
+      ctx.lineWidth = 2;
+      ctx.fillStyle = "#3b82f6"; // Default blue
+      
+      // Draw based on component type with enhanced visualization
+      if (type.includes("source") || type === "source") {
+        // Single Photon Source
+        ctx.beginPath();
+        ctx.arc(0, 0, 20, 0, Math.PI * 2);
+        ctx.fillStyle = "#22c55e"; // Green
+        ctx.fill();
+        
+        // Draw emission lines
+        const rays = 7;
+        for (let i = 0; i < rays; i++) {
+          const angle = (i / rays) * Math.PI;
+          ctx.beginPath();
+          ctx.moveTo(20 * Math.cos(angle), 20 * Math.sin(angle));
+          ctx.lineTo(30 * Math.cos(angle), 30 * Math.sin(angle));
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+        
+        // Draw photon symbol
+        ctx.fillStyle = 'white';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('γ', 0, 0);
+        
+      } else if (type.includes("beam") || type === "beamsplitter") {
+        // Beam Splitter
+        ctx.beginPath();
+        ctx.moveTo(-20, -20); // Top-left
+        ctx.lineTo(20, -20);  // Top-right
+        ctx.lineTo(20, 20);   // Bottom-right
+        ctx.lineTo(-20, 20);  // Bottom-left
+        ctx.closePath();
+        ctx.fillStyle = "#3b82f6"; // Blue
+        ctx.fill();
+        
+        // Draw splitting line
+        ctx.beginPath();
+        ctx.moveTo(-20, -20);
+        ctx.lineTo(20, 20);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+      } else if (type.includes("phase") || type === "phaseshifter") {
+        // Phase Shifter
+        ctx.beginPath();
+        ctx.arc(0, 0, 20, 0, Math.PI * 2);
+        ctx.fillStyle = "#f97316"; // Orange
+        ctx.fill();
+        
+        // Draw phi symbol
+        ctx.fillStyle = 'white';
+        ctx.font = '16px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('φ', 0, 0);
+        
+      } else if (type.includes("detector") || type === "detector") {
+        // Single Photon Detector
+        ctx.beginPath();
+        ctx.arc(0, 0, 20, 0, Math.PI * 2);
+        ctx.fillStyle = "#ef4444"; // Red
+        ctx.fill();
+        
+        // Draw detector icon
+        ctx.beginPath();
+        ctx.arc(0, 0, 15, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Draw detection lines
+        ctx.beginPath();
+        ctx.moveTo(-10, -10);
+        ctx.lineTo(10, 10);
+        ctx.moveTo(-10, 10);
+        ctx.lineTo(10, -10);
+        ctx.stroke();
+        
+      } else if (type.includes("mzi")) {
+        // Mach-Zehnder Interferometer
+        ctx.beginPath();
+        ctx.roundRect(-20, -10, 40, 20, 5);
+        ctx.fillStyle = "#8b5cf6"; // Purple
+        ctx.fill();
+        
+        // Draw MZI internal structure
+        ctx.beginPath();
+        ctx.moveTo(-15, -5);
+        ctx.lineTo(15, -5);
+        ctx.moveTo(-15, 5);
+        ctx.lineTo(15, 5);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        
+      } else if (type.includes("ring") || type === "ring") {
+        // Ring Resonator
+        ctx.beginPath();
+        ctx.arc(0, 0, 20, 0, Math.PI * 2);
+        ctx.fillStyle = 'transparent';
+        ctx.strokeStyle = "#06b6d4"; // Cyan
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Draw waveguide
+        ctx.beginPath();
+        ctx.moveTo(-30, 0);
+        ctx.lineTo(30, 0);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+      } else if (type.includes("straight") || type === "straight") {
+        // Straight Waveguide
+        ctx.beginPath();
+        ctx.moveTo(-25, 0);
+        ctx.lineTo(25, 0);
+        ctx.strokeStyle = "#10b981"; // Green
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Add small markers at ends
+        ctx.beginPath();
+        ctx.arc(-25, 0, 3, 0, Math.PI * 2);
+        ctx.arc(25, 0, 3, 0, Math.PI * 2);
+        ctx.fillStyle = "#10b981";
+        ctx.fill();
+        
+      } else {
+        // Generic component (fallback)
+        ctx.beginPath();
+        ctx.arc(0, 0, 20, 0, Math.PI * 2);
+        ctx.fillStyle = "#64748b"; // Gray
+        ctx.fill();
+        
+        // Question mark for unknown component
+        ctx.fillStyle = 'white';
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('?', 0, 0);
+      }
+      
+      // Draw ports
+      Object.entries(component.ports || {}).forEach(([portName, portPos]) => {
+        if (portPos) {
+          const portX = portPos.x - component.x;
+          const portY = portPos.y - component.y;
+          
+          ctx.beginPath();
+          ctx.arc(portX, portY, 4, 0, Math.PI * 2);
+          
+          // Color ports by type
+          if (portName.includes('i') || portName.includes('input')) {
+            ctx.fillStyle = '#f97316'; // Orange for inputs
+          } else if (portName.includes('o') || portName.includes('output') || portName.includes('through')) {
+            ctx.fillStyle = '#22c55e'; // Green for outputs
+          } else if (portName.includes('drop')) {
+            ctx.fillStyle = '#06b6d4'; // Cyan for drop ports
+          } else {
+            ctx.fillStyle = '#94a3b8'; // Gray for other ports
+          }
+          
+          ctx.fill();
+        }
+      });
+      
+      ctx.restore();
+      
+      // Draw component label
+      let label = component.type;
+      if (type.includes("source") || type === "source") label = "Source";
+      if (type.includes("beam") || type === "beamsplitter") label = "Beam Splitter";
+      if (type.includes("phase") || type === "phaseshifter") label = "Phase Shifter";
+      if (type.includes("detector") || type === "detector") label = "Detector";
+      if (type.includes("mzi")) label = "MZI";
+      if (type.includes("ring") || type === "ring") label = "Ring Resonator";
+      if (type.includes("straight") || type === "straight") label = "Waveguide";
+      
+      ctx.fillStyle = 'white';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, x, y + 30);
     });
   };
 
@@ -737,9 +1000,103 @@ export default function PhotonicChipDesigner() {
     }
   };
 
-  const handleLoadCircuit = (circuit: CircuitTemplate) => {
-    setComponents(circuit.components);
-    setConnections(circuit.connections);
+  const handleLoadCircuit = (circuit: typeof PREDEFINED_CIRCUITS[0]) => {
+    // Map the predefined components to our enhanced component types
+    const mappedComponents: PhotonicComponent[] = circuit.components.map((component, index) => {
+      // Map the old component types to our new enhanced types
+      let enhancedType = component.type;
+      
+      // Map common component types to our enhanced types
+      if (component.type === 'source') enhancedType = 'singlePhotonSource';
+      if (component.type === 'straight') enhancedType = 'straight';
+      if (component.type === 'beamSplitter') enhancedType = 'beamsplitter';
+      if (component.type === 'detector') enhancedType = 'singlePhotonDetector';
+      if (component.type === 'phaseShifter') enhancedType = 'phaseShifter';
+      if (component.type === 'ring') enhancedType = 'ringResonator';
+      
+      // Get the default parameters for this component type
+      const typeConfig = COMPONENT_TYPES[enhancedType] || { name: component.type, color: '#777777' };
+      
+      // Generate properly positioned ports based on component type
+      const ports: Record<string, { x: number, y: number }> = {};
+      const portRadius = 25; // Distance from center to port
+      
+      // Special handling for different component types to ensure proper port positioning
+      if (enhancedType === 'singlePhotonSource') {
+        ports.output = { x: component.x + portRadius, y: component.y };
+      } else if (enhancedType === 'singlePhotonDetector') {
+        ports.input = { x: component.x - portRadius, y: component.y };
+      } else if (enhancedType === 'beamsplitter') {
+        ports.input1 = { x: component.x - portRadius, y: component.y - portRadius };
+        ports.input2 = { x: component.x - portRadius, y: component.y + portRadius };
+        ports.output1 = { x: component.x + portRadius, y: component.y - portRadius };
+        ports.output2 = { x: component.x + portRadius, y: component.y + portRadius };
+      } else if (enhancedType === 'phaseShifter') {
+        ports.input = { x: component.x - portRadius, y: component.y };
+        ports.output = { x: component.x + portRadius, y: component.y };
+      } else if (enhancedType === 'ringResonator') {
+        ports.input = { x: component.x - portRadius, y: component.y };
+        ports.through = { x: component.x + portRadius, y: component.y };
+        ports.drop = { x: component.x, y: component.y + portRadius };
+      } else {
+        // Handle all other port types
+        if (component.ports) {
+          Object.entries(component.ports).forEach(([portName, portPos]) => {
+            if (portPos) {
+              ports[portName] = { 
+                x: component.x + portPos.x, 
+                y: component.y + portPos.y
+              };
+            }
+          });
+        }
+      }
+
+      // Convert string params to numbers where applicable
+      const processedParams: PhotonicComponentParams = {};
+      
+      if (component.params) {
+        Object.entries(component.params).forEach(([key, value]) => {
+          // Try to convert string values to numbers where appropriate
+          if (typeof value === 'string' && !isNaN(Number(value))) {
+            processedParams[key] = Number(value);
+          } else if (typeof value === 'number') {
+            processedParams[key] = value;
+          } else {
+            // For any other type, use a default number value
+            // This handles cases where we can't convert to a number safely
+            processedParams[key] = 0;
+          }
+        });
+      }
+      
+      // Ensure required params exist with defaults
+      if (!('width' in processedParams)) processedParams.width = 0.5;
+      if (!('length' in processedParams)) processedParams.length = 10;
+      if (!('layer' in processedParams)) processedParams.layer = 1;
+      
+      // Create enhanced component with proper visualization properties
+      return {
+        id: `component-${index}`,
+        type: enhancedType,
+        x: component.x,
+        y: component.y,
+        rotation: component.rotation || 0,
+        params: processedParams,
+        ports: ports
+      };
+    });
+    
+    // Map the connections to use the correct component IDs and port names
+    const mappedConnections: PhotonicConnection[] = circuit.connections.map((connection) => ({
+      source: connection.source,
+      target: connection.target
+    }));
+    
+    // Set state with properly typed components
+    setComponents(mappedComponents);
+    setConnections(mappedConnections);
+    
     toast({
       title: "Circuit Loaded",
       description: `Loaded ${circuit.name} successfully.`,
@@ -751,7 +1108,7 @@ export default function PhotonicChipDesigner() {
     let animationFrameId: number;
     
     const animate = () => {
-      draw();
+      drawCircuit(canvasRef.current?.getContext('2d') as CanvasRenderingContext2D);
       animationFrameId = requestAnimationFrame(animate);
     };
     
@@ -864,9 +1221,14 @@ export default function PhotonicChipDesigner() {
                             id={param}
                             value={value}
                             onChange={(e) => {
+                              // Convert to number if it's a numeric value, otherwise keep as string
+                              const paramValue = !isNaN(Number(e.target.value)) 
+                                ? Number(e.target.value) 
+                                : e.target.value;
+                              
                               updateComponentParams(selectedComponent, {
                                 ...selectedComponent.params,
-                                [param]: e.target.value
+                                [param]: paramValue
                               });
                             }}
                           >
@@ -886,7 +1248,7 @@ export default function PhotonicChipDesigner() {
                             onValueChange={([newValue]) => {
                               updateComponentParams(selectedComponent, {
                                 ...selectedComponent.params,
-                                [param]: newValue
+                                [param]: Number(newValue) // Ensure it's a number
                               });
                             }}
                           />
