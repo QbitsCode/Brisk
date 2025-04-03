@@ -1363,88 +1363,13 @@ export default function PhotonicCircuitDesigner({ onDesignUpdate }: { onDesignUp
         y: newY
       };
       
-      // Update the dragging component's port positions immediately to avoid lag
-      const componentType = COMPONENT_TYPES[updatedComponent.type as keyof typeof COMPONENT_TYPES];
-      if (componentType && componentType.ports) {
-        const portPositions: Record<string, {x: number, y: number}> = {};
-        
-        componentType.ports.forEach((portName, index) => {
-          let portX = newX;
-          let portY = newY;
-          const radius = 25;
-          
-          if (updatedComponent.type.includes('beamsplitter')) {
-            if (portName === 'input1') {
-              portX = newX - radius;
-              portY = newY - radius;
-            } else if (portName === 'input2') {
-              portX = newX - radius;
-              portY = newY + radius;
-            } else if (portName === 'output1') {
-              portX = newX + radius;
-              portY = newY - radius;
-            } else if (portName === 'output2') {
-              portX = newX + radius;
-              portY = newY + radius;
-            }
-          } else if (updatedComponent.type.includes('mzi')) {
-            if (portName === 'input') {
-              portX = newX - radius;
-              portY = newY;
-            } else if (portName === 'output') {
-              portX = newX + radius;
-              portY = newY;
-            }
-          } else if (updatedComponent.type.includes('ring')) {
-            if (portName === 'input') {
-              portX = newX - radius;
-              portY = newY;
-            } else if (portName === 'through') {
-              portX = newX + radius;
-              portY = newY;
-            } else if (portName === 'drop') {
-              portX = newX;
-              portY = newY + radius;
-            }
-          } else if (updatedComponent.type.includes('Source')) {
-            if (updatedComponent.type.includes('Entangled')) {
-              if (portName === 'outputA') {
-                portX = newX + radius;
-                portY = newY - radius/2;
-              } else if (portName === 'outputB') {
-                portX = newX + radius;
-                portY = newY + radius/2;
-              }
-            } else {
-              portX = newX + radius;
-              portY = newY;
-            }
-          } else if (updatedComponent.type.includes('Detector')) {
-            portX = newX - radius;
-            portY = newY;
-          } else {
-            const angle = (index / componentType.ports.length) * 2 * Math.PI;
-            portX = newX + radius * Math.cos(angle);
-            portY = newY + radius * Math.sin(angle);
-          }
-          
-          portPositions[portName] = { x: portX, y: portY };
-        });
-        
-        updatedComponent.ports = portPositions;
-      }
-      
-      // Update components array with the new position and port positions
-      setComponents(
-        components.map(component => 
-          component.id === draggingComponent.id ? updatedComponent : component
-        )
+      // Update the component in the components array
+      const updatedComponents = components.map(c => 
+        c.id === draggingComponent.id ? updatedComponent : c
       );
       
-      // Also update selected component if it's the one being dragged
-      if (selectedComponent && selectedComponent.id === draggingComponent.id) {
-        setSelectedComponent(updatedComponent);
-      }
+      // Update the components state
+      setComponents(updatedComponents);
       
       // Update the dragging component reference
       setDraggingComponent(updatedComponent);
