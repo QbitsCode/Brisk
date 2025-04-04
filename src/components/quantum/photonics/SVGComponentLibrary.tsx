@@ -5,9 +5,10 @@ interface SVGComponentLibraryProps {
   type: string;
   className?: string;
   isActive?: boolean;
+  isSelected?: boolean;
 }
 
-export function SVGComponentLibrary({ type, className, isActive = false }: SVGComponentLibraryProps) {
+export function SVGComponentLibrary({ type, className, isActive = false, isSelected = false }: SVGComponentLibraryProps) {
   const components = {
     'single-photon-source': (
       <svg

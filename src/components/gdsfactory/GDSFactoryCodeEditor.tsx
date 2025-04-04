@@ -137,40 +137,53 @@ export default function GDSFactoryCodeEditor({
           />
         </div>
 
+        {error && (
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 rounded-md mt-4">
+            <h3 className="text-lg font-semibold mb-2">Error</h3>
+            <p className="whitespace-pre-wrap">{error}</p>
+          </div>
+        )}
+        
         {results && (
-          <div className="border rounded-md p-4 bg-gray-800 text-white font-mono text-sm h-80 overflow-auto">
-            <Tabs defaultValue="output">
+          <div className="space-y-2 mt-4">
+            <Tabs defaultValue="output" className="w-full">
               <TabsList>
                 <TabsTrigger value="output">Output</TabsTrigger>
                 <TabsTrigger value="preview">Quick Preview</TabsTrigger>
               </TabsList>
-              <TabsContent value="output" className="h-64 overflow-auto">
-                {results?.stdout && (
-                  <>
-                    <p className="text-green-400">&gt;&gt;&gt; Executing GDSFactory code...</p>
-                    <pre className="text-yellow-400">{results.stdout || 'No output generated.'}</pre>
-                  </>
-                )}
-                {results?.stderr && (
-                  <pre className="text-red-400">{results.stderr}</pre>
-                )}
-                {error && (
-                  <pre className="text-red-400">{error}</pre>
-                )}
-              </TabsContent>
-              <TabsContent value="preview" className="p-0">
-                <div className="bg-white dark:bg-slate-800 h-[465px] flex items-center justify-center">
-                  {(previewImage || results?.preview) ? (
-                    <div className="w-full h-full overflow-auto p-4">
+              <TabsContent value="output" className="mt-2">
+                <div className="border rounded min-h-[200px] max-h-[300px] overflow-auto bg-black text-green-500 font-mono text-sm p-4">
+                  <div className="text-yellow-400 mb-2">{'>>> Executing GDSFactory code...'}</div>
+                  <div className="whitespace-pre-wrap">{results.stdout}</div>
+                  {results.stderr && (
+                    <div className="text-red-400 whitespace-pre-wrap mt-2">{results.stderr}</div>
+                  )}
+                  {results.preview && (
+                    <div className="mt-4">
                       <img 
-                        src={`data:image/png;base64,${previewImage || results.preview}`} 
-                        alt="Photonic Chip Preview"
-                        className="max-w-full h-auto mx-auto"
+                        src={results.preview.startsWith('data:') 
+                          ? results.preview 
+                          : `data:image/png;base64,${results.preview}`}
+                        alt="GDSFactory Preview"
+                        className="max-w-full h-auto border border-slate-200 dark:border-slate-700"
                       />
                     </div>
+                  )}
+                </div>
+              </TabsContent>
+              <TabsContent value="preview" className="mt-2">
+                <div className="border rounded p-4 bg-white dark:bg-slate-900 flex justify-center">
+                  {results.preview ? (
+                    <img 
+                      src={results.preview.startsWith('data:') 
+                        ? results.preview 
+                        : `data:image/png;base64,${results.preview}`}
+                      alt="GDSFactory Preview"
+                      className="max-w-full h-auto border border-slate-200 dark:border-slate-700"
+                    />
                   ) : (
-                    <div className="text-gray-500">
-                      No preview available. Generate your chip design to see a quick preview.
+                    <div className="text-center text-gray-500 p-8">
+                      <p>No preview available</p>
                     </div>
                   )}
                 </div>

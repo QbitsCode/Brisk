@@ -9,6 +9,7 @@ import { SiteHeader } from "@/components/site-header"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { Providers } from "@/components/providers"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { AuthProvider } from "@/components/auth"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -49,13 +50,14 @@ export default function RootLayout({ children }: RootLayoutProps) {
           enableSystem
           disableTransitionOnChange
         >
-          <div className="relative flex min-h-screen flex-col">
-            <SiteHeader />
-            <Providers>
-              <TooltipProvider>
-                <div className="flex-1">{children}</div>
-              </TooltipProvider>
-            </Providers>
+          <AuthProvider>
+            <div className="relative flex min-h-screen flex-col">
+              <SiteHeader />
+              <Providers>
+                <TooltipProvider>
+                  <div className="flex-1">{children}</div>
+                </TooltipProvider>
+              </Providers>
             <footer className="border-t border-border bg-card mt-12">
               <div className="container flex flex-col items-center justify-center py-6 md:h-24 md:py-0">
                 <p className="text-center text-sm leading-loose text-muted-foreground">
@@ -63,8 +65,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 </p>
               </div>
             </footer>
-          </div>
-          <TailwindIndicator />
+            </div>
+            <TailwindIndicator />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

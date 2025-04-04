@@ -7,6 +7,8 @@ import { buttonVariants } from "@/components/ui/button"
 import { Icons } from "@/components/icons"
 import { MainNav } from "@/components/main-nav"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { AuthModal, UserProfile, CommunityShared } from "@/components/auth"
+import { useAuth } from "@/components/auth"
 
 export function SiteHeader() {
   return (
@@ -14,7 +16,15 @@ export function SiteHeader() {
       <div className="container flex h-14 items-center">
         <MainNav />
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <nav className="flex items-center space-x-1">
+          <nav className="flex items-center space-x-2">
+            <div className="mr-2 flex items-center space-x-2">
+              <CommunityShared />
+
+              {/* UserProfile will render when logged in, AuthModal will render when not logged in */}
+              <UserProfile />
+              <AuthModal />
+            </div>
+
             <Link
               href={siteConfig.links.twitter}
               target="_blank"

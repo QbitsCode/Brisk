@@ -1,3 +1,7 @@
+# Set matplotlib to use non-GUI backend before any other imports
+import matplotlib
+matplotlib.use('Agg')  # Use Agg backend for server environment (no GUI)
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -369,9 +373,6 @@ def execute_perceval_code(code: str) -> PercevalCodeResponse:
     old_stdout, old_stderr = sys.stdout, sys.stderr
     stdout_capture = StringIO()
     stderr_capture = StringIO()
-    sys.stdout, sys.stderr = stdout_capture, stderr_capture
-    
-    # Capture any plots
     plots = []
     unitary_matrix = None
     
@@ -395,6 +396,10 @@ def execute_perceval_code(code: str) -> PercevalCodeResponse:
         
         # Execute the code
         exec(code, {}, local_vars)
+        
+        # Get the stdout and stderr
+        stdout = stdout_capture.getvalue()
+        stderr = stderr_capture.getvalue()
         
         # Check if there's a circuit or unitary matrix in the local vars
         for var_name, var_value in local_vars.items():
@@ -422,11 +427,11 @@ def execute_perceval_code(code: str) -> PercevalCodeResponse:
         stderr_capture.write(f"Error: {str(e)}\n")
     finally:
         # Restore stdout and stderr
-        sys.stdout, sys.stderr = old_stdout, old_stderr
+        sys.stdout, sys.stdout = old_stdout, old_stderr
         plt.show = original_show
     
     return PercevalCodeResponse(
-        stdout=stdout_capture.getvalue(),
+        stdout=stdout,
         stderr=stderr_capture.getvalue(),
         plots=plots,
         unitary=json.dumps(unitary_matrix) if unitary_matrix else None
@@ -552,149 +557,271 @@ def execute_gdsfactory_code(code: str) -> GDSFactoryCodeResponse:
     """
     Execute the provided GDSFactory code and capture all outputs
     """
+    # Set up output capture
+    old_stdout, old_stderr = sys.stdout, sys.stderr
     stdout_capture = StringIO()
     stderr_capture = StringIO()
+    sys.stdout, sys.stderr = stdout_capture, stderr_capture
+    
+    # Import modules needed for execution
+    import gdsfactory as gf
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from io import BytesIO
+    import base64
+    
+    # Capture any plots
+    plots = []
     preview_image = None
     visualization_image = None
     visualization_3d_image = None
     gds_data = None
     simulation_results = None
     simulation_plots = []
-
-    # Capture all output
-    with contextlib.redirect_stdout(stdout_capture), contextlib.redirect_stderr(stderr_capture):
-        try:
-            # Create a custom namespace for execution
-            local_namespace = {
-                'gf': gf,
-                'np': np,
-                'plt': plt,
-                '__preview_component': None,
-                '__visualization_3d': None
-            }
-            
-            # Modify the code to capture the component for visualization
-            modified_code = code + "\n\n"
-            modified_code += "# Capture the last component for visualization\n"
-            modified_code += "import inspect\n"
-            modified_code += "for name, obj in list(locals().items()):\n"
-            modified_code += "    if isinstance(obj, gf.Component):\n"
-            modified_code += "        __preview_component = obj\n"
-            modified_code += "        break\n"
-            
-            # Execute the modified code
-            exec(modified_code, globals(), local_namespace)
-            
-            # Get the preview component
-            preview_component = local_namespace.get('__preview_component')
-            
-            if preview_component:
-                # Generate quick preview
-                preview_fig = plt.figure(figsize=(10, 10))
-                preview_component.plot()
-                buffer = BytesIO()
-                preview_fig.savefig(buffer, format='png')
-                plt.close(preview_fig)
-                preview_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                
-                # Generate detailed visualization
-                viz_fig = plt.figure(figsize=(12, 12))
-                preview_component.plot(show_ports=True, show_subports=True)
-                buffer = BytesIO()
-                viz_fig.savefig(buffer, format='png')
-                plt.close(viz_fig)
-                visualization_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                
-                # Export GDS file
-                gds_buffer = BytesIO()
-                preview_component.write_gds(gds_buffer)
-                gds_data = base64.b64encode(gds_buffer.getvalue()).decode('utf-8')
-                
-                # Try to generate a 3D visualization if possible
-                try:
-                    from gdsfactory.simulation import gmeep
-                    viz_3d_fig = plt.figure(figsize=(10, 10))
-                    gmeep.plot_eps(preview_component)
-                    buffer = BytesIO()
-                    viz_3d_fig.savefig(buffer, format='png')
-                    plt.close(viz_3d_fig)
-                    visualization_3d_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                except Exception as e:
-                    stderr_capture.write(f"\nWarning: Couldn't generate 3D visualization: {str(e)}\n")
-                
-                # Try to run a simple simulation if applicable
-                try:
-                    from gdsfactory.simulation import lumerical
-                    
-                    # Only run simulation if it looks like the code might benefit from it
-                    if any(term in code for term in ['splitter', 'coupler', 'mzi', 'ring', 'interferometer']):
-                        sim_result = {}
-                        
-                        # For MZI, run a simple wavelength sweep
-                        if 'mzi' in code.lower():
-                            sim_fig = plt.figure(figsize=(10, 6))
-                            wavelengths = np.linspace(1500, 1600, 100)
-                            transmission = 0.5 * (1 + np.cos(2 * np.pi * (wavelengths - 1550) / 20))
-                            plt.plot(wavelengths, transmission)
-                            plt.xlabel('Wavelength (nm)')
-                            plt.ylabel('Transmission')
-                            plt.title('Simulated MZI Transmission')
-                            buffer = BytesIO()
-                            sim_fig.savefig(buffer, format='png')
-                            plt.close(sim_fig)
-                            simulation_plots.append(base64.b64encode(buffer.getvalue()).decode('utf-8'))
-                            
-                            sim_result = {
-                                "device_type": "mzi",
-                                "wavelengths": wavelengths.tolist(),
-                                "transmission": transmission.tolist(),
-                                "insertion_loss": f"{-10 * np.log10(np.max(transmission)):.2f} dB",
-                                "extinction_ratio": f"{10 * np.log10(np.max(transmission) / np.min(transmission)):.2f} dB"
-                            }
-                        
-                        # For ring resonators, simulate resonances
-                        elif 'ring' in code.lower():
-                            sim_fig = plt.figure(figsize=(10, 6))
-                            wavelengths = np.linspace(1540, 1560, 1000)
-                            fsr = 5  # nm
-                            resonances = 1 - 0.9 * np.exp(-((wavelengths - 1550) % fsr - fsr/2)**2 / 0.05)
-                            plt.plot(wavelengths, resonances)
-                            plt.xlabel('Wavelength (nm)')
-                            plt.ylabel('Transmission')
-                            plt.title('Simulated Ring Resonator Response')
-                            buffer = BytesIO()
-                            sim_fig.savefig(buffer, format='png')
-                            plt.close(sim_fig)
-                            simulation_plots.append(base64.b64encode(buffer.getvalue()).decode('utf-8'))
-                            
-                            sim_result = {
-                                "device_type": "ring",
-                                "wavelengths": wavelengths.tolist()[:100],  # Limit data size
-                                "transmission": resonances.tolist()[:100],  # Limit data size
-                                "fsr": f"{fsr} nm",
-                                "q_factor": "~10,000",
-                                "extinction_ratio": "~10 dB"
-                            }
-                            
-                        simulation_results = sim_result
-                except Exception as e:
-                    stderr_capture.write(f"\nWarning: Couldn't run simulation: {str(e)}\n")
-        
-        except Exception as e:
-            stderr_capture.write(f"Error executing GDSFactory code: {str(e)}\n")
-            import traceback
-            stderr_capture.write(traceback.format_exc())
     
-    return GDSFactoryCodeResponse(
+    try:
+        # Create a custom namespace for execution
+        local_namespace = {
+            'gf': gf,
+            'np': np,
+            'plt': plt,
+            '__preview_component': None,
+            '__visualization_3d': None
+        }
+        
+        # Modify the code to capture the component for visualization
+        modified_code = code + "\n\n"
+        modified_code += "# Capture the last component for visualization\n"
+        modified_code += "import inspect\n"
+        modified_code += "for name, obj in list(locals().items()):\n"
+        modified_code += "    if isinstance(obj, gf.Component):\n"
+        modified_code += "        __preview_component = obj\n"
+        modified_code += "        break\n"
+        
+        # Execute the modified code
+        exec(modified_code, globals(), local_namespace)
+        
+        # Get the preview component
+        preview_component = local_namespace.get('__preview_component')
+        
+        if preview_component:
+            # Create a temporary directory for our files
+            import tempfile
+            import os
+            import gdsfactory as gf
+            from pathlib import Path
+            
+            temp_dir = tempfile.mkdtemp()
+            temp_gds_path = Path(temp_dir) / "component.gds"
+            temp_png_path = Path(temp_dir) / "preview.png"
+            
+            # Save the GDS file directly - this is the most fundamental operation
+            preview_component.write_gds(temp_gds_path)
+            
+            # Use a simplified visualization approach that works with built-in modules
+            try:
+                # Create a clear visualization focusing on the chip layout
+                plt.figure(figsize=(10, 8), dpi=150)
+                ax = plt.subplot(111)
+                
+                # Plot with simplified settings to clearly show the chip
+                preview_component.plot(
+                    with_labels=False,  # Turn off the crowded labels
+                    show_ports=True,
+                    show_subports=False,
+                    new_window=False,
+                )
+                
+                # Enhance colors and line widths for better visibility
+                for collection in ax.collections:
+                    collection.set_linewidth(2)  # Make waveguides thicker
+                
+                # Focus on the actual chip area
+                bounds = preview_component.bbox
+                margin = max(bounds.width, bounds.height) * 0.2
+                plt.xlim(bounds.xmin - margin, bounds.xmax + margin)
+                plt.ylim(bounds.ymin - margin, bounds.ymax + margin)
+                
+                # Add a proper title
+                plt.title("Quantum Photonic Chip - MZI Layout", fontsize=16)
+                plt.grid(False)  # Remove distracting grid
+                
+                # Save the visualization
+                plt.tight_layout()
+                plt.savefig(str(temp_png_path))
+                plt.close()
+                
+                stdout_capture.write(f"\n# DEBUG: Generated clean 2D visualization\n")
+            
+            except Exception as e:
+                stderr_capture.write(f"\nError generating visualization: {str(e)}\n")
+                import traceback
+                stderr_capture.write(traceback.format_exc())
+                
+                # Fallback to extremely simple visualization as last resort
+                try:
+                    plt.figure(figsize=(10, 8))
+                    plt.title("Quantum Photonic Chip", fontsize=16)
+                    preview_component.plot(show_ports=True)
+                    plt.savefig(str(temp_png_path), dpi=150)
+                    plt.close()
+                    stdout_capture.write(f"\n# DEBUG: Generated fallback visualization\n")
+                except Exception as e2:
+                    stderr_capture.write(f"\nError in fallback visualization: {str(e2)}\n")
+                    
+                    # Absolute last resort - just text
+                    plt.figure(figsize=(8, 6))
+                    plt.text(0.5, 0.5, f"Component: {preview_component.name}", 
+                            ha='center', va='center', fontsize=16)
+                    plt.axis('off')
+                    plt.savefig(str(temp_png_path), dpi=100)
+                    plt.close()
+            
+            # Read the file as raw binary data
+            with open(temp_png_path, 'rb') as f:
+                preview_data = f.read()
+            
+            # Convert to base64
+            preview_image = "data:image/png;base64," + base64.b64encode(preview_data).decode('utf-8')
+            
+            # Log success and the length of the data
+            stdout_capture.write(f"\n# DEBUG: Successfully saved preview to {temp_png_path}\n")
+            stdout_capture.write(f"# DEBUG: Preview image data length: {len(preview_image)} bytes\n")
+            
+            # Clean up the temporary directory
+            import shutil
+            shutil.rmtree(temp_dir)
+            
+            # Generate detailed visualization
+            viz_fig = plt.figure(figsize=(12, 12))
+            preview_component.plot(show_ports=True, show_subports=True)
+            buffer = BytesIO()
+            viz_fig.savefig(buffer, format='png')
+            plt.close(viz_fig)
+            visualization_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            
+            # Export GDS file
+            try:
+                # Create a temporary file instead of using BytesIO directly
+                import tempfile
+                import os
+                
+                # Create a temporary file with .gds extension
+                temp_gds = tempfile.NamedTemporaryFile(suffix='.gds', delete=False)
+                temp_gds.close()
+                
+                # Write to the temporary file
+                preview_component.write_gds(temp_gds.name)
+                
+                # Read the file back and convert to base64
+                with open(temp_gds.name, 'rb') as f:
+                    gds_data = base64.b64encode(f.read()).decode('utf-8')
+                
+                # Clean up the temporary file
+                os.unlink(temp_gds.name)
+            except Exception as e:
+                stderr_capture.write(f"\nError generating GDS file: {str(e)}\n")
+                gds_data = None
+            
+            # Try to generate a 3D visualization if possible
+            try:
+                from gdsfactory.simulation import gmeep
+                viz_3d_fig = plt.figure(figsize=(10, 10))
+                gmeep.plot_eps(preview_component)
+                buffer = BytesIO()
+                viz_3d_fig.savefig(buffer, format='png')
+                plt.close(viz_3d_fig)
+                visualization_3d_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            except Exception as e:
+                stderr_capture.write(f"\nWarning: Couldn't generate 3D visualization: {str(e)}\n")
+            
+            # Try to run a simple simulation if applicable
+            try:
+                from gdsfactory.simulation import lumerical
+                
+                # Only run simulation if it looks like the code might benefit from it
+                if any(term in code for term in ['splitter', 'coupler', 'mzi', 'ring', 'interferometer']):
+                    sim_result = {}
+                    
+                    # For MZI, run a simple wavelength sweep
+                    if 'mzi' in code.lower():
+                        sim_fig = plt.figure(figsize=(10, 6))
+                        wavelengths = np.linspace(1500, 1600, 100)
+                        transmission = 0.5 * (1 + np.cos(2 * np.pi * (wavelengths - 1550) / 20))
+                        plt.plot(wavelengths, transmission)
+                        plt.xlabel('Wavelength (nm)')
+                        plt.ylabel('Transmission')
+                        plt.title('Simulated MZI Transmission')
+                        buffer = BytesIO()
+                        sim_fig.savefig(buffer, format='png')
+                        plt.close(sim_fig)
+                        simulation_plots.append(base64.b64encode(buffer.getvalue()).decode('utf-8'))
+                        
+                        sim_result = {
+                            "device_type": "mzi",
+                            "wavelengths": wavelengths.tolist(),
+                            "transmission": transmission.tolist(),
+                            "insertion_loss": f"{-10 * np.log10(np.max(transmission)):.2f} dB",
+                            "extinction_ratio": f"{10 * np.log10(np.max(transmission) / np.min(transmission)):.2f} dB"
+                        }
+                    
+                    # For ring resonators, simulate resonances
+                    elif 'ring' in code.lower():
+                        sim_fig = plt.figure(figsize=(10, 6))
+                        wavelengths = np.linspace(1540, 1560, 1000)
+                        fsr = 5  # nm
+                        resonances = 1 - 0.9 * np.exp(-((wavelengths - 1550) % fsr - fsr/2)**2 / 0.05)
+                        plt.plot(wavelengths, resonances)
+                        plt.xlabel('Wavelength (nm)')
+                        plt.ylabel('Transmission')
+                        plt.title('Simulated Ring Resonator Response')
+                        buffer = BytesIO()
+                        sim_fig.savefig(buffer, format='png')
+                        plt.close(sim_fig)
+                        simulation_plots.append(base64.b64encode(buffer.getvalue()).decode('utf-8'))
+                        
+                        sim_result = {
+                            "device_type": "ring",
+                            "wavelengths": wavelengths.tolist()[:100],  # Limit data size
+                            "transmission": resonances.tolist()[:100],  # Limit data size
+                            "fsr": f"{fsr} nm",
+                            "q_factor": "~10,000",
+                            "extinction_ratio": "~10 dB"
+                        }
+                        
+                    simulation_results = sim_result
+            except Exception as e:
+                stderr_capture.write(f"\nWarning: Couldn't run simulation: {str(e)}\n")
+        
+        # Restore stdout and stderr
+        sys.stdout, sys.stderr = old_stdout, old_stderr
+        
+    except Exception as e:
+        stderr_capture.write(f"Error executing GDSFactory code: {str(e)}\n")
+        import traceback
+        stderr_capture.write(traceback.format_exc())
+    
+    # Format the response to include all important data
+    response = GDSFactoryCodeResponse(
         stdout=stdout_capture.getvalue(),
         stderr=stderr_capture.getvalue(),
-        preview=preview_image,
-        visualization=visualization_image,
-        visualization_3d=visualization_3d_image,
-        gds_file=gds_data,
-        simulation_results=simulation_results,
-        simulation_plots=simulation_plots
+        preview=preview_image if 'preview_image' in locals() else None,  # Now properly formatted as a data URL
+        visualization=visualization_image if 'visualization_image' in locals() else None,
+        visualization_3d=visualization_3d_image if 'visualization_3d_image' in locals() else None,
+        gds_file=gds_data if 'gds_data' in locals() else None,
+        simulation_results=simulation_results if 'simulation_results' in locals() else None
     )
+    
+    # Add more debugging information to help troubleshoot visualization issues
+    if 'preview_image' in locals() and preview_image:
+        stdout_capture.write(f"\n# DEBUG: Preview image was generated successfully as data URL\n")
+        stdout_capture.write(f"# DEBUG: Preview image starts with: {preview_image[:30]}...\n")
+        response.stdout = stdout_capture.getvalue()
+    else:
+        stderr_capture.write("\n# WARNING: No preview image was generated\n")
+        response.stderr = stderr_capture.getvalue()
+    
+    return response
 
 @app.post("/api/quantum/gdsfactory/execute", response_model=GDSFactoryCodeResponse)
 def execute_gdsfactory(request: GDSFactoryCodeRequest):

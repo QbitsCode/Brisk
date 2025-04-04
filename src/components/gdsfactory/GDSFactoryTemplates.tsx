@@ -32,12 +32,16 @@ import gdsfactory as gf
 from gdsfactory.components import mzi
 
 # Create a Mach-Zehnder interferometer for quantum operations
-c = mzi(delta_length=10, splitter='mmi2x2')
+# Set reasonable parameters that will render properly
+c = mzi(delta_length=30, splitter='mmi2x2')
 
 # Add ports and pins for fabrication reference
 c = gf.routing.add_fiber_array(c)
 
-# Show the component
+# Get this component as the one to be visualized
+__preview_component = c
+
+# Show the component with more spacing for clearer visualization
 c.show()
 
 # Export to GDSII
@@ -56,6 +60,9 @@ from gdsfactory.components import coupler
 
 # Create a directional coupler to use as a beamsplitter
 c = coupler(gap=0.2, length=10)
+
+# Set this component as the one to be visualized
+__preview_component = c
 
 # Show the component
 c.show()
@@ -78,9 +85,10 @@ from gdsfactory.components import mzi, delay_snake
 mzi1 = mzi(delta_length=10)
 mzi2 = mzi(delta_length=10)
 
-# Create phase shifters using delay components
-phase_shifter1 = delay_snake(length=20)
-phase_shifter2 = delay_snake(length=20)
+# Create phase shifters using delay components with adjusted parameters
+# Fix: Increase length and adjust n to avoid "Snake is too short" error
+phase_shifter1 = delay_snake(length=50, n=4, layer=(1, 0))
+phase_shifter2 = delay_snake(length=50, n=4, layer=(1, 0))
 
 # Create a component and add references
 c = gf.Component("cnot_gate")
@@ -91,9 +99,9 @@ ref_ps2 = c << phase_shifter2
 
 # Position the components
 ref_mzi1.movex(0)
-ref_ps1.movex(ref_mzi1.size[0] + 10)
-ref_mzi2.movex(ref_ps1.size[0] + ref_mzi1.size[0] + 20)
-ref_ps2.movex(ref_mzi2.size[0] + ref_ps1.size[0] + ref_mzi1.size[0] + 30)
+ref_ps1.movex(ref_mzi1.size[0] + 20)
+ref_mzi2.movex(ref_ps1.size[0] + ref_mzi1.size[0] + 30)
+ref_ps2.movex(ref_mzi2.size[0] + ref_ps1.size[0] + ref_mzi1.size[0] + 40)
 
 # Add optical routes between components
 route1 = gf.routing.optical_route(
@@ -114,6 +122,9 @@ route3 = gf.routing.optical_route(
     port2=ref_ps2.ports["o1"],
     radius=10,
 )
+
+# Set this component as the one to be visualized
+__preview_component = c
 
 # Show the component
 c.show()
@@ -149,7 +160,7 @@ h1.movex(0)
 p1.movex(h1.size[0] + 20)
 h2.movex(h1.size[0] + p1.size[0] + 40)
 
-# Create routes between components (simplified for visualization)
+# Add optical routes between components
 route1 = gf.routing.optical_route(
     component=c,
     port1=h1.ports["o2"],
@@ -163,11 +174,14 @@ route2 = gf.routing.optical_route(
     radius=10,
 )
 
+# Set this component as the one to be visualized
+__preview_component = c
+
 # Show the component
 c.show()
 
 # Export to GDSII
-# c.write_gds("quantum_fourier_transform.gds")
+# c.write_gds("quantum_qft.gds")
 `
     },
     {
@@ -178,69 +192,66 @@ c.show()
       complexity: 'intermediate',
       code: `# GDSFactory Quantum Photonic Chip Design - Bell State Generator
 import gdsfactory as gf
-from gdsfactory.components import mmi2x2, straight
+from gdsfactory.components import mzi, y_splitter
 
-# Create a component for Bell state generation
+# Create a component for our Bell state generator
 c = gf.Component("bell_state_generator")
 
-# Create a 2x2 MMI coupler (acts as a Hadamard gate)
-coupler = mmi2x2(width_mmi=2.5, length_mmi=5.5)
+# Create subcomponents:
+# Y-splitter for the first qubit
+splitter = y_splitter(width=0.5, length_straight=2)
 
-# Create two straight waveguides for inputs
-input1 = straight(length=20)
-input2 = straight(length=20)
+# Hadamard-like operation using an MZI
+hadamard = mzi(delta_length=10)
 
-# Add components to the circuit
-ref_coupler = c << coupler
-ref_input1 = c << input1
-ref_input2 = c << input2
+# Add references to the component
+splitter_ref = c << splitter
+hadamard_ref = c << hadamard
 
 # Position components
-ref_input1.movex(-30)
-ref_input1.movey(2)
-ref_input2.movex(-30)
-ref_input2.movey(-2)
+splitter_ref.movex(0)
+hadamard_ref.movex(splitter_ref.size[0] + 20)
 
-# Connect inputs to the coupler
-route1 = gf.routing.optical_route(
+# Add optical routes between components
+route = gf.routing.optical_route(
     component=c,
-    port1=ref_input1.ports["o2"],
-    port2=ref_coupler.ports["o1"],
+    port1=splitter_ref.ports["o2"],
+    port2=hadamard_ref.ports["o1"],
     radius=10,
 )
-route2 = gf.routing.optical_route(
-    component=c,
-    port1=ref_input2.ports["o2"],
-    port2=ref_coupler.ports["o2"],
-    radius=10,
-)
+
+# Set this component as the one to be visualized
+__preview_component = c
 
 # Show the component
 c.show()
 
 # Export to GDSII
-# c.write_gds("bell_state_generator.gds")
+# c.write_gds("quantum_bell_state.gds")
 `
     },
     {
-      id: 'crossing-waveguides',
+      id: 'waveguide-crossing',
       title: 'Low-Loss Waveguide Crossing',
       description: 'Optimized waveguide crossing for high-density quantum photonic circuits',
       tags: ['crossing', 'waveguide', 'topology'],
       complexity: 'intermediate',
-      code: `# GDSFactory Quantum Photonic Chip Design - Low-Loss Crossing
+      code: `# GDSFactory Quantum Photonic Chip Design - Waveguide Crossing
 import gdsfactory as gf
 from gdsfactory.components import crossing
 
-# Create an optimized waveguide crossing for quantum circuits
-# Low optical crosstalk is crucial for quantum operations
-c = crossing(width=0.5, length=3)
+# Create a low-loss waveguide crossing for dense photonic circuits
+# Optimized parameters for better visualization
+c = crossing(width=0.5, length=5, layer=(1, 0))
+
+# Set this component as the one to be visualized
+__preview_component = c
 
 # Show the component
 c.show()
 
 # Export to GDSII
-# c.write_gds("low_loss_crossing.gds")
+# c.write_gds("waveguide_crossing.gds")
 `
     }
   ]
@@ -259,33 +270,43 @@ c.show()
   }
 
   return (
-    <ScrollArea className="h-[600px] pr-4">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {quantumTemplates.map((template) => (
-          <Card key={template.id} className="flex flex-col">
+    <ScrollArea className="h-[600px]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {quantumTemplates.map(template => (
+          <Card key={template.id} className="flex flex-col h-full">
             <CardHeader>
               <CardTitle>{template.title}</CardTitle>
               <CardDescription>{template.description}</CardDescription>
             </CardHeader>
-            <CardContent className="flex-1">
-              <div className="flex flex-wrap gap-1 mb-2">
-                <Badge variant="outline" className={complexityColor(template.complexity)}>
+            <CardContent className="flex-grow">
+              <div className="flex flex-wrap gap-1 mb-4">
+                <Badge className={`${template.complexity === 'beginner' ? 'bg-green-500' : template.complexity === 'intermediate' ? 'bg-blue-500' : 'bg-purple-500'}`}>
                   {template.complexity}
                 </Badge>
                 {template.tags.map(tag => (
-                  <Badge key={tag} variant="secondary" className="text-xs">
-                    {tag}
-                  </Badge>
+                  <Badge key={tag} variant="outline">{tag}</Badge>
                 ))}
-              </div>
-              <div className="mt-2 text-sm text-muted-foreground line-clamp-3">
-                {template.code.split('\n').slice(0, 3).join('\n')}...
               </div>
             </CardContent>
             <CardFooter>
               <Button 
-                onClick={() => onSelectTemplate(template.code)}
-                className="w-full"
+                className="w-full" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log('Template button clicked for:', template.title);
+                  try {
+                    // Call the parent component's handler
+                    onSelectTemplate(template.code);
+                    console.log('onSelectTemplate called successfully with code length:', template.code.length);
+                    
+                    // Display success message
+                    const alertMessage = `Template "${template.title}" loaded! Switch to Code Editor tab to view it.`;
+                    console.log(alertMessage);
+                    alert(alertMessage);
+                  } catch (error) {
+                    console.error('Error selecting template:', error);
+                  }
+                }}
               >
                 Use Template
               </Button>
