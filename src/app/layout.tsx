@@ -1,5 +1,5 @@
 import "@/styles/globals.css"
-import { Metadata } from "next"
+import { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 
 import { siteConfig } from "@/config/site"
@@ -10,6 +10,7 @@ import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { Providers } from "@/components/providers"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { AuthProvider } from "@/components/auth"
+import { NextAuthProvider } from "@/components/auth/NextAuthProvider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -19,15 +20,18 @@ export const metadata: Metadata = {
     template: `%s - ${siteConfig.name}`,
   },
   description: siteConfig.description,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
-  ],
   icons: {
     icon: "/favicon_io/favicon.ico",
     shortcut: "/favicon_io/favicon-16x16.png",
     apple: "/favicon_io/apple-touch-icon.png",
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "white" },
+    { media: "(prefers-color-scheme: dark)", color: "black" },
+  ],
 }
 
 interface RootLayoutProps {
@@ -50,8 +54,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <div className="relative flex min-h-screen flex-col">
+          <NextAuthProvider>
+            <AuthProvider>
+              <div className="relative flex min-h-screen flex-col">
               <SiteHeader />
               <Providers>
                 <TooltipProvider>
@@ -65,9 +70,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 </p>
               </div>
             </footer>
-            </div>
-            <TailwindIndicator />
-          </AuthProvider>
+              </div>
+              <TailwindIndicator />
+            </AuthProvider>
+          </NextAuthProvider>
         </ThemeProvider>
       </body>
     </html>

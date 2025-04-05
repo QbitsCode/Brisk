@@ -1,55 +1,84 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/components/auth';
+import userService, { UserWithStatus } from '@/services/UserService';
 
-// Types
-interface User {
-  id: string;
-  name: string;
-  status: 'online' | 'away' | 'offline';
-  lastActive: Date;
-  avatar?: string;
-}
+// Re-export the UserWithStatus type
+export type { UserWithStatus as User };
 
-// Mock data - in a real app this would come from a database or API
-const MOCK_USERS: User[] = [
-  { id: '1', name: 'Alice Chen', status: 'online', lastActive: new Date() },
-  { id: '2', name: 'Bob Smith', status: 'away', lastActive: new Date(Date.now() - 15 * 60 * 1000) },
-  { id: '3', name: 'Charlie Quantum', status: 'offline', lastActive: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
-  { id: '4', name: 'Diana Heisenberg', status: 'online', lastActive: new Date() },
-  { id: '5', name: 'Ethan Bell', status: 'offline', lastActive: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
-  { id: '6', name: 'Fiona Qubit', status: 'online', lastActive: new Date() },
-];
+// Utility function to get real users for other components
+export const getUsers = (): UserWithStatus[] => {
+  return userService.getUsers();
+};
 
 export function UserList() {
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
+  const [users, setUsers] = useState<UserWithStatus[]>([]);
   const { user: currentUser } = useAuth();
+
+  // Fetch all users from the service
+  const fetchUsers = useCallback(() => {
+    const fetchedUsers = userService.getUsers();
+    setUsers(fetchedUsers);
+  }, []);
   
-  // In a real app, you would fetch users and their status from an API or WebSocket
+  // Initial fetch of users
   useEffect(() => {
-    // Simulate periodic status updates
-    const interval = setInterval(() => {
-      // Randomly change one user's status for demonstration
-      if (Math.random() > 0.7) {
-        const randomIndex = Math.floor(Math.random() * users.length);
-        const statuses: ('online' | 'away' | 'offline')[] = ['online', 'away', 'offline'];
-        const newStatus = statuses[Math.floor(Math.random() * statuses.length)];
-        
-        setUsers(prevUsers => {
-          const newUsers = [...prevUsers];
-          newUsers[randomIndex] = {
-            ...newUsers[randomIndex],
-            status: newStatus,
-            lastActive: newStatus === 'offline' ? new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000) : new Date()
-          };
-          return newUsers;
-        });
-      }
-    }, 10000); // Update every 10 seconds
+    fetchUsers();
     
-    return () => clearInterval(interval);
-  }, [users]);
+    // Mark current user as online when component mounts
+    if (currentUser) {
+      userService.updateUserStatus(currentUser.id, 'online');
+    }
+
+    // Set up periodic refresh
+    const refreshInterval = setInterval(fetchUsers, 10000); // Refresh every 10 seconds
+    
+    // Set up inactivity tracking
+    let inactivityTimer: NodeJS.Timeout;
+    
+    const resetInactivityTimer = () => {
+      if (currentUser) {
+        // Clear any existing timer
+        if (inactivityTimer) clearTimeout(inactivityTimer);
+        
+        // Set user to 'away' after 5 minutes of inactivity
+        inactivityTimer = setTimeout(() => {
+          userService.updateUserStatus(currentUser.id, 'away');
+        }, 5 * 60 * 1000);
+      }
+    };
+
+    // Track user activity
+    const trackActivity = () => {
+      if (currentUser) {
+        userService.updateUserStatus(currentUser.id, 'online');
+        resetInactivityTimer();
+      }
+    };
+
+    // Add event listeners for user activity
+    window.addEventListener('mousemove', trackActivity);
+    window.addEventListener('keydown', trackActivity);
+    window.addEventListener('click', trackActivity);
+    
+    // Start the inactivity timer
+    resetInactivityTimer();
+
+    // Clean up on unmount
+    return () => {
+      clearInterval(refreshInterval);
+      clearTimeout(inactivityTimer);
+      window.removeEventListener('mousemove', trackActivity);
+      window.removeEventListener('keydown', trackActivity);
+      window.removeEventListener('click', trackActivity);
+      
+      // Set user to offline when component unmounts, if they're the current user
+      if (currentUser) {
+        userService.updateUserStatus(currentUser.id, 'offline');
+      }
+    };
+  }, [currentUser, fetchUsers]);
   
   // Render a status indicator based on user status
   const renderStatusIndicator = (status: 'online' | 'away' | 'offline') => {

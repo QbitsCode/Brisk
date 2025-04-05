@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/components/auth';
-import { Loader2, X, ArrowRight } from 'lucide-react';
+import { SocialAuth } from '@/components/auth/SocialAuth';
+import { signIn, useSession } from 'next-auth/react';
+import { Loader2, X, ArrowRight, Mail, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -16,24 +18,41 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [verificationNeeded, setVerificationNeeded] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
   const router = useRouter();
-  const { login, signup, user } = useAuth();
+  const searchParams = useSearchParams();
+  const { login, signup, user, resendVerification } = useAuth();
+  const { data: session } = useSession();
   
   // Redirect to home if already logged in
   useEffect(() => {
-    if (user) {
+    // Check if user is logged in through Brisk auth or NextAuth session
+    if (user || session?.user) {
       router.push('/');
     }
-  }, [user, router]);
+    
+    // Check if we're coming back from verification or need to verify
+    const viewParam = searchParams.get('view');
+    const emailParam = searchParams.get('email');
+    const verifyParam = searchParams.get('verify');
+    
+    if (viewParam && (viewParam === 'login' || viewParam === 'signup' || viewParam === 'email')) {
+      setView(viewParam as AuthView);
+    }
+    
+    if (emailParam) {
+      setEmail(emailParam);
+    }
+    
+    if (verifyParam === 'true') {
+      setVerificationNeeded(true);
+    }
+  }, [user, session, router, searchParams]);
 
-  const handleSocialAuth = (provider: string) => {
-    // In a real implementation, this would redirect to OAuth flow
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      // Show a message that this is just a demo
-      alert(`${provider} authentication is a demo feature only.`);
-    }, 1000);
+  const handleSocialAuthSuccess = () => {
+    // This function will be called after successful social authentication
+    router.push('/');
   };
 
   const handleEmailSubmit = (e: React.FormEvent) => {
@@ -49,24 +68,55 @@ export default function AuthPage() {
     e.preventDefault();
     setIsLoading(true);
     
-    const success = await login(email, password);
-    if (success) {
-      router.push('/');
+    try {
+      const success = await login(email, password);
+      if (success) {
+        router.push('/');
+      } else {
+        // Check if verification is needed (this is a simplified check, in a real app
+        // we would get this info from the login response)
+        const storedUsers = JSON.parse(localStorage.getItem('brisk_users') || '[]');
+        const matchedUser = storedUsers.find((u: any) => u.email === email);
+        
+        if (matchedUser && !matchedUser.isVerified) {
+          setVerificationNeeded(true);
+        }
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    const success = await signup(name, email, password);
-    if (success) {
-      router.push('/');
+    try {
+      const success = await signup(name, email, password);
+      if (success) {
+        setVerificationSent(true);
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+    } finally {
+      setIsLoading(false);
     }
+  };
+  
+  const handleResendVerification = async () => {
+    if (!email || isLoading) return;
     
-    setIsLoading(false);
+    setIsLoading(true);
+    try {
+      await resendVerification(email);
+      setVerificationSent(true);
+    } catch (error) {
+      console.error('Resend verification error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -96,48 +146,7 @@ export default function AuthPage() {
           {view === 'email' && (
             <form onSubmit={handleEmailSubmit} className="space-y-6">
               <div className="space-y-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full bg-transparent text-white border-gray-700 hover:bg-gray-800 flex items-center justify-center gap-2 h-12"
-                  onClick={() => handleSocialAuth('X')}
-                  disabled={isLoading}
-                >
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                  </svg>
-                  Sign up with X
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full bg-transparent text-white border-gray-700 hover:bg-gray-800 flex items-center justify-center gap-2 h-12"
-                  onClick={() => handleSocialAuth('Google')}
-                  disabled={isLoading}
-                >
-                  <svg className="h-5 w-5" viewBox="0 0 24 24">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                  </svg>
-                  Sign up with Google
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full bg-transparent text-white border-gray-700 hover:bg-gray-800 flex items-center justify-center gap-2 h-12"
-                  onClick={() => handleSocialAuth('Apple')}
-                  disabled={isLoading}
-                >
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12.152 6.896c-.948 0-2.415-1.04-3.96-1.01-2.04.02-3.913 1.181-4.962 3.002-2.115 3.651-.54 9.058 1.514 12.03 1.011 1.447 2.216 3.082 3.792 3.022 1.524-.054 2.096-1.012 3.932-1.012 1.837 0 2.357 1.012 3.96.981 1.634-.03 2.668-1.486 3.673-2.94 1.159-1.676 1.634-3.308 1.664-3.387-.036-.011-3.193-1.234-3.224-4.883-.03-3.033 2.481-4.503 2.597-4.582-1.447-2.098-3.662-2.335-4.44-2.376-2.026-.174-3.692 1.135-4.546 1.135z" />
-                    <path d="M14.642 4.095c.83-1.006 1.395-2.419 1.24-3.827-1.193.05-2.641.8-3.501 1.819-.768.895-1.438 2.334-1.262 3.7 1.336.105 2.694-.699 3.523-1.692z" />
-                  </svg>
-                  Sign up with Apple
-                </Button>
+                <SocialAuth onSuccess={handleSocialAuthSuccess} />
               </div>
 
               <div className="flex items-center gap-3 my-6">
@@ -181,14 +190,14 @@ export default function AuthPage() {
             </form>
           )}
 
-          {view === 'signup' && (
+          {view === 'signup' && !verificationSent && (
             <form onSubmit={handleSignupSubmit} className="space-y-6">
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm text-gray-400 block mb-2">Full Name</label>
+                  <label className="text-sm text-gray-400 block mb-2">Name</label>
                   <input
                     type="text"
-                    placeholder="John Doe"
+                    placeholder="Your name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     disabled={isLoading}
@@ -243,9 +252,40 @@ export default function AuthPage() {
                 </button>
               </div>
             </form>
+          )
+          }
+          
+          {/* Verification sent message */}
+          {verificationSent && (
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 text-center">
+              <Mail className="h-12 w-12 mx-auto text-blue-400 mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Verification Email Sent</h2>
+              <p className="text-gray-400 mb-6">
+                We've sent a verification email to <strong>{email}</strong>. Please check your inbox and follow the instructions to verify your account.
+              </p>
+              <div className="space-y-3">
+                <Button 
+                  className="w-full"
+                  variant="outline"
+                  onClick={() => router.push(`/verify-email?email=${encodeURIComponent(email)}`)}
+                >
+                  Go to Verification Page
+                </Button>
+                <Button 
+                  className="w-full"
+                  variant="link"
+                  onClick={() => {
+                    setVerificationSent(false);
+                    setView('login');
+                  }}
+                >
+                  Back to Login
+                </Button>
+              </div>
+            </div>
           )}
 
-          {view === 'login' && (
+          {view === 'login' && !verificationNeeded && (
             <form onSubmit={handleLoginSubmit} className="space-y-6">
               <div className="space-y-4">
                 <div>
@@ -301,6 +341,38 @@ export default function AuthPage() {
                 </button>
               </div>
             </form>
+          )}
+          
+          {/* Verification needed message */}
+          {verificationNeeded && (
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 text-center">
+              <AlertTriangle className="h-12 w-12 mx-auto text-amber-400 mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Email Verification Required</h2>
+              <p className="text-gray-400 mb-6">
+                Your account requires email verification before you can log in. Please check your inbox for the verification link or request a new one.
+              </p>
+              <div className="space-y-3">
+                <Button 
+                  className="w-full"
+                  variant="outline"
+                  onClick={handleResendVerification}
+                  disabled={isLoading}
+                >
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Resend Verification Email
+                </Button>
+                <Button 
+                  className="w-full"
+                  variant="link"
+                  onClick={() => {
+                    setVerificationNeeded(false);
+                    setView('login');
+                  }}
+                >
+                  Back to Login
+                </Button>
+              </div>
+            </div>
           )}
 
           {view !== 'email' && (

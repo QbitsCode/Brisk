@@ -2,12 +2,16 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
+import { useSession, signIn, signOut } from 'next-auth/react';
 
 export interface User {
   id: string;
   email: string;
   name: string;
   projects: Project[];
+  isVerified: boolean;
+  verificationToken?: string;
+  meetings?: Meeting[];
 }
 
 export interface Project {
@@ -21,12 +25,27 @@ export interface Project {
   updatedAt: Date;
 }
 
+export interface Meeting {
+  id: string;
+  title: string;
+  description: string;
+  date: Date;
+  time: string;
+  duration: number;
+  hostId: string;
+  invitees: string[];
+  meetingLink: string;
+  createdAt: Date;
+}
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  verifyEmail: (token: string) => Promise<boolean>;
+  resendVerification: (email: string) => Promise<boolean>;
   saveProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Project>;
   setProjectPublic: (projectId: string, isPublic: boolean) => Promise<boolean>;
   getPublicProjects: () => Promise<Project[]>;
@@ -40,19 +59,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Helper function to generate a random string token
+  const generateToken = () => {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  };
+
+  // Helper function to simulate sending an email
+  const sendVerificationEmail = async (email: string, token: string) => {
+    // In a real app, this would call an API endpoint to send an email
+    console.log(`Sending verification email to ${email} with token ${token}`);
+    
+    // For demo purposes, we'll just show a toast
+    toast({
+      title: "Verification Email Sent",
+      description: `A verification email has been sent to ${email}. In this demo, use token: ${token} to verify.`,
+    });
+    
+    return true;
+  };
+
+  // Get NextAuth session
+  const { data: session, status } = useSession();
+
   useEffect(() => {
-    // Check if user is logged in
+    console.log('Session state changed:', status, session);
+    
+    // First check if user is logged in with NextAuth
+    if (status === 'authenticated' && session?.user) {
+      // Convert NextAuth session user to our User type
+      const nextAuthUser: User = {
+        id: session.user.id || session.user.email || '',
+        email: session.user.email || '',
+        name: session.user.name || '',
+        projects: [], // We'll need to fetch projects from API in a real app
+        isVerified: true, // Social logins are considered verified
+      };
+      
+      console.log('Setting authenticated user:', nextAuthUser);
+      setUser(nextAuthUser);
+      
+      // Update localStorage to keep user state persistent
+      localStorage.setItem('brisk_user', JSON.stringify(nextAuthUser));
+      
+      setIsLoading(false);
+      return;
+    } else if (status === 'loading') {
+      // Still loading NextAuth session
+      console.log('Loading NextAuth session...');
+      setIsLoading(true);
+      return;
+    } else if (status === 'unauthenticated') {
+      console.log('User is not authenticated with NextAuth');
+      // Clear user state if logged out from NextAuth
+      localStorage.removeItem('brisk_user');
+      setUser(null);
+    }
+    
+    // If not logged in with NextAuth, check localStorage
     const storedUser = localStorage.getItem('brisk_user');
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        console.log('Found stored user:', parsedUser);
+        setUser(parsedUser);
       } catch (error) {
         console.error('Failed to parse stored user:', error);
         localStorage.removeItem('brisk_user');
       }
     }
     setIsLoading(false);
-  }, []);
+  }, [session, status]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -82,6 +158,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           description: "Incorrect password. Please try again.",
           variant: "destructive"
         });
+        return false;
+      }
+      
+      // Check if user is verified
+      if (!matchedUser.isVerified) {
+        toast({
+          title: "Email Verification Required",
+          description: `Please verify your email first. A verification email was sent to ${email}.`,
+        });
+        
+        // Resend verification email if needed
+        await sendVerificationEmail(email, matchedUser.verificationToken);
         return false;
       }
       
@@ -128,27 +216,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
       
-      // Create new user
-      const newUser = {
-        id: `user_${Date.now()}`,
+      // Generate verification token
+      const verificationToken = generateToken();
+      
+      // Create new user with verification token and unverified status
+      const newUser: User = {
+        id: Date.now().toString(),
         name,
         email,
-        password, // In a real app, we'd hash this
-        projects: []
+        projects: [],
+        isVerified: false,
+        verificationToken,
+        meetings: []
       };
       
-      // Add to stored users
-      storedUsers.push(newUser);
+      // In a real app, we'd hash the password
+      const userWithPassword = { ...newUser, password };
+      
+      // Add to users array
+      storedUsers.push(userWithPassword);
       localStorage.setItem('brisk_users', JSON.stringify(storedUsers));
       
-      // Remove password before storing in state/localStorage
-      const { password: _, ...userWithoutPassword } = newUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem('brisk_user', JSON.stringify(userWithoutPassword));
+      // Log user in
+      setUser(newUser);
+      localStorage.setItem('brisk_user', JSON.stringify(newUser));
+      
+      // Send verification email
+      await sendVerificationEmail(email, verificationToken);
       
       toast({
         title: "Signup Successful",
-        description: `Welcome to Brisk, ${name}!`,
+        description: `Welcome, ${name}! Please check your email to verify your account.`
       });
       return true;
     } catch (error) {
@@ -164,12 +262,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Clear local storage
     localStorage.removeItem('brisk_user');
     setUser(null);
+    
+    // Use NextAuth signOut to clear session cookies
+    await signOut({ redirect: true, callbackUrl: '/' });
+    
     toast({
       title: "Logged Out",
-      description: "You have been successfully logged out.",
+      description: "You have been successfully logged out."
     });
   };
 
@@ -344,6 +447,111 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Add verification functions
+  const verifyEmail = async (token: string): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      // In a real app, we would call an API endpoint here
+      const storedUsers = JSON.parse(localStorage.getItem('brisk_users') || '[]');
+      
+      // Find user with this verification token
+      const userIndex = storedUsers.findIndex((u: any) => u.verificationToken === token);
+      
+      if (userIndex === -1) {
+        toast({
+          title: "Verification Failed",
+          description: "Invalid verification token. Please try again or request a new verification email.",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      // Mark user as verified
+      storedUsers[userIndex].isVerified = true;
+      storedUsers[userIndex].verificationToken = undefined; // Clear the token
+      
+      // Update localStorage
+      localStorage.setItem('brisk_users', JSON.stringify(storedUsers));
+      
+      // If this is the current user, update their state too
+      if (user && user.id === storedUsers[userIndex].id) {
+        const updatedUser = { ...user, isVerified: true, verificationToken: undefined };
+        setUser(updatedUser);
+        localStorage.setItem('brisk_user', JSON.stringify(updatedUser));
+      }
+      
+      toast({
+        title: "Email Verified",
+        description: "Your email has been verified successfully. You can now log in.",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Verification error:', error);
+      toast({
+        title: "Verification Failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const resendVerification = async (email: string): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      
+      const storedUsers = JSON.parse(localStorage.getItem('brisk_users') || '[]');
+      const userIndex = storedUsers.findIndex((u: any) => u.email === email);
+      
+      if (userIndex === -1) {
+        toast({
+          title: "Resend Failed",
+          description: "User not found. Please check your email or sign up.",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      if (storedUsers[userIndex].isVerified) {
+        toast({
+          title: "Already Verified",
+          description: "Your email is already verified. You can log in.",
+        });
+        return true;
+      }
+      
+      // Generate new token if needed
+      const verificationToken = storedUsers[userIndex].verificationToken || generateToken();
+      storedUsers[userIndex].verificationToken = verificationToken;
+      
+      // Update localStorage
+      localStorage.setItem('brisk_users', JSON.stringify(storedUsers));
+      
+      // Send verification email
+      await sendVerificationEmail(email, verificationToken);
+      
+      toast({
+        title: "Verification Email Sent",
+        description: "A new verification email has been sent. Please check your inbox.",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Resend verification error:', error);
+      toast({
+        title: "Resend Failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -352,6 +560,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         signup,
         logout,
+        verifyEmail,
+        resendVerification,
         saveProject,
         setProjectPublic,
         getPublicProjects,
