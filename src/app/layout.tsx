@@ -21,9 +21,9 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   icons: {
-    icon: "/favicon_io/favicon.ico",
-    shortcut: "/favicon_io/favicon-16x16.png",
-    apple: "/favicon_io/apple-touch-icon.png",
+    icon: "/favicon_io/favicon.ico?v=2",
+    shortcut: "/favicon_io/favicon-16x16.png?v=2",
+    apple: "/favicon_io/apple-touch-icon.png?v=2",
   },
 }
 
@@ -42,6 +42,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
+      
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",

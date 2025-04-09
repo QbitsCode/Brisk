@@ -35,10 +35,10 @@ export const Icons = {
   logo: ({ className, ...props }: React.ComponentProps<"img">) => (
     <img
       src="/logo-icon.png"
-      alt="Brisk Logo"
+      alt="Brisk Quantum Framework"
       width="32"
       height="32"
-      className={`rounded-full ${className || ""}`}
+      className={className || ""}
       {...props}
     />
   ),
