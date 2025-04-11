@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/components/auth';
@@ -12,7 +12,9 @@ import Link from 'next/link';
 
 type AuthView = 'email' | 'login' | 'signup';
 
-export default function AuthPage() {
+// Create a client component that safely uses useSearchParams
+// Component that uses searchParams and needs to be wrapped in Suspense
+function AuthContent() {
   const [view, setView] = useState<AuthView>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -393,5 +395,16 @@ export default function AuthPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+// Main export wrapped in Suspense
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center min-h-screen">
+      <Loader2 className="animate-spin h-8 w-8 text-white" />
+    </div>}>
+      <AuthContent />
+    </Suspense>
   );
 }
