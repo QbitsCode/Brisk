@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { QuantumCircuit, CircuitTemplate } from '@/components/quantum/photonics/QuantumCircuit';
@@ -11,11 +11,32 @@ import { CircuitTemplates } from '@/components/quantum/templates/CircuitTemplate
 import { briskConfig } from '@/config/brisk';
 import { CheckIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import StrawberryFieldsCircuit from '@/components/quantum/strawberryfields/StrawberryFieldsCircuit';
 
 export default function Home() {
   // Add state to track the selected template
   const [selectedTemplate, setSelectedTemplate] = useState<CircuitTemplate | null>(null);
   const { toast } = useToast();
+
+  // Splash video redirection logic
+  useEffect(() => {
+    // Check if we're being redirected from the splash page
+    const fromSplash = new URLSearchParams(window.location.search).get('from_splash');
+    
+    // Don't redirect if we're already coming from splash
+    if (fromSplash === 'true') {
+      return;
+    }
+    
+    // Check if we've seen the splash before
+    const hasSeenSplash = localStorage.getItem('brisk_has_seen_splash');
+    
+    if (!hasSeenSplash) {
+      // First visit, redirect to splash video
+      window.location.href = '/splash.html';
+    }
+  }, []);
 
   // Handle template selection
   const handleTemplateSelection = (template: CircuitTemplate) => {
@@ -29,6 +50,7 @@ export default function Home() {
 
   return (
     <DndProvider backend={HTML5Backend}>
+      {/* Test button removed for beta release */}
       <div className="container mx-auto px-4 py-8 space-y-12">
         <header className="mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -45,56 +67,84 @@ export default function Home() {
         <section className="space-y-8">
           <h2 className="text-3xl font-bold">Interactive Quantum Applications</h2>
           
+          <div className="bg-card rounded-lg mb-6">
+            <div className="p-6 border-b">
+              <h3 className="text-xl font-medium">Quantum Circuit & Network Center</h3>
+              <p className="text-muted-foreground mt-2">
+                Design quantum circuits with gates, qubits, and measurements, then integrate with quantum networks.
+              </p>
+            </div>
+            <div className="p-6">
+              <Tabs defaultValue="photonic">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="photonic">Photonic Circuit</TabsTrigger>
+                  <TabsTrigger value="strawberry">Quantum Gate Circuit</TabsTrigger>
+                  <TabsTrigger value="network">Quantum Network</TabsTrigger>
+                </TabsList>
+                <TabsContent value="strawberry">
+                  <StrawberryFieldsCircuit />
+                </TabsContent>
+                <TabsContent value="photonic">
+                  <div className="flex flex-col lg:flex-row gap-6">
+                    <div className="flex-1">
+                      <QuantumCircuit 
+                        className="w-full h-full" 
+                        selectedTemplate={selectedTemplate} 
+                        onTemplateLoaded={() => setSelectedTemplate(null)}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <CircuitTemplates
+                        onSelectTemplate={handleTemplateSelection}
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+                <TabsContent value="network">
+                  <div className="flex flex-col lg:flex-row gap-6">
+                    <div className="flex-1">
+                      <QuantumNetwork className="w-full" />
+                    </div>
+                    <div className="flex-1">
+                      <QKDProtocol className="w-full" />
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
+          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-card rounded-lg flex flex-col">
-              <div className="p-6 border-b min-h-[132px]">
-                <h3 className="text-xl font-medium">Quantum Circuit Designer</h3>
+              <div className="p-6 border-b min-h-[120px]">
+                <h3 className="text-xl font-medium">Quantum State Visualization</h3>
                 <p className="text-muted-foreground mt-2">
-                  Design and simulate quantum photonic circuits with an intuitive drag-and-drop interface.
+                  Visualize quantum states and analyze measurement outcomes.
                 </p>
               </div>
               <div className="p-6 flex-1">
-                <QuantumCircuit 
+                <StateVisualizer 
+                  states={[
+                    { amplitude: 0.707, phase: 0, basis: '|00⟩ + |11⟩' },
+                    { amplitude: 0.5, phase: Math.PI/4, basis: '|+⟩' },
+                    { amplitude: 0.5, phase: Math.PI/2, basis: '|-⟩' }
+                  ]} 
                   className="w-full h-full" 
-                  selectedTemplate={selectedTemplate} 
-                  onTemplateLoaded={() => setSelectedTemplate(null)}
                 />
               </div>
             </div>
 
             <div className="bg-card rounded-lg flex flex-col">
-              <div className="p-6 border-b min-h-[132px]">
-                <h3 className="text-xl font-medium">Circuit Templates</h3>
+              <div className="p-6 border-b min-h-[120px]">
+                <h3 className="text-xl font-medium">Simulation Results</h3>
                 <p className="text-muted-foreground mt-2">
-                  Choose from pre-designed quantum circuit templates for common experiments and quantum protocols. Easily import and customize templates.
+                  View detailed results from quantum circuit and network simulations.
                 </p>
               </div>
               <div className="p-6 flex-1">
-                <CircuitTemplates onSelectTemplate={handleTemplateSelection} />
-              </div>
-            </div>
-
-            <div className="bg-card rounded-lg flex flex-col">
-              <div className="p-6 border-b">
-                <h3 className="text-xl font-medium">Quantum Network Simulator</h3>
-                <p className="text-muted-foreground mt-2">
-                  Simulate quantum networks and communication protocols in real-time.
-                </p>
-              </div>
-              <div className="p-6 flex-1">
-                <QuantumNetwork className="w-full h-full" />
-              </div>
-            </div>
-
-            <div className="bg-card rounded-lg flex flex-col">
-              <div className="p-6 border-b">
-                <h3 className="text-xl font-medium">Quantum Key Distribution</h3>
-                <p className="text-muted-foreground mt-2">
-                  Implement and analyze quantum key distribution protocols.
-                </p>
-              </div>
-              <div className="p-6 flex-1">
-                <QKDProtocol className="w-full h-full" />
+                <div className="text-center py-8 text-muted-foreground italic">
+                  Run a simulation to see results
+                </div>
               </div>
             </div>
           </div>
