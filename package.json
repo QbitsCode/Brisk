@@ -9,7 +9,7 @@
     "lint": "next lint || true",
     "export": "next export",
     "deploy": "next build && touch out/.nojekyll",
-    "vercel-build": "ESLINT_SKIP_CHECKING=true NEXT_TELEMETRY_DISABLED=1 CI=false next build --no-lint"
+    "vercel-build": "prisma generate && ESLINT_SKIP_CHECKING=true NEXT_TELEMETRY_DISABLED=1 CI=false next build --no-lint"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
