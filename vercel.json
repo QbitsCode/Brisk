@@ -5,7 +5,9 @@
       "src": "package.json",
       "use": "@vercel/next",
       "config": {
-        "buildCommand": "node build.js"
+        "buildCommand": "npm run vercel-build",
+        "outputDirectory": ".next",
+        "devCommand": "next dev"
       }
     }
   ],
@@ -13,7 +15,10 @@
     "NEXT_DISABLE_ESLINT": "1",
     "ESLINT_SKIP_CHECKING": "true",
     "ESLINT_NO_DEV_ERRORS": "true",
-    "NEXT_DISABLE_TYPES": "1"
+    "NEXT_DISABLE_TYPES": "1",
+    "NEXT_TELEMETRY_DISABLED": "1",
+    "CI": "false",
+    "DATABASE_URL": "file:/tmp/dev.db"
   },
   "routes": [
     { "handle": "filesystem" },
