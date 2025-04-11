@@ -1,4 +1,5 @@
 {
+  "_comment": "Force new deployment",
   "version": 2,
   "builds": [
     {
