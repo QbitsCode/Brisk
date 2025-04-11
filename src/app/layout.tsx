@@ -11,6 +11,7 @@ import { Providers } from "@/components/providers"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { AuthProvider } from "@/components/auth"
 import { NextAuthProvider } from "@/components/auth/NextAuthProvider"
+import { SplashScreenRedirect } from "@/components/splash/SplashRedirect"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -21,9 +22,9 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   icons: {
-    icon: "/favicon_io/favicon.ico?v=2",
-    shortcut: "/favicon_io/favicon-16x16.png?v=2",
-    apple: "/favicon_io/apple-touch-icon.png?v=2",
+    icon: "/favicon_io/favicon.ico?v=3",
+    shortcut: "/favicon_io/favicon-16x16.png?v=3",
+    apple: "/favicon_io/apple-touch-icon.png?v=3",
   },
 }
 
@@ -41,7 +42,11 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head />
+      <head>
+        {/* Force favicon refresh */}
+        <link rel="icon" href="/logo-icon.png" />
+        <link rel="shortcut icon" href="/logo-icon.png" />
+      </head>
       
       <body
         className={cn(
@@ -49,6 +54,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           inter.className
         )}
       >
+        <SplashScreenRedirect />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

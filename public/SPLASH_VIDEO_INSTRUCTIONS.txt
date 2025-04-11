@@ -1,0 +1,16 @@
+BRISK SPLASH VIDEO INSTRUCTIONS
+
+To complete the splash screen implementation:
+
+1. Export your video from the Canva design (https://www.canva.com/design/DAGjycJTRyI/vfF4nU8OklzpRRa0gQGC0A/edit) 
+   as an MP4 file
+
+2. Rename the file to "brisk-splash-video.mp4"
+
+3. Place the file in this directory (/public/)
+
+The splash screen is configured to play this 12-second video and 
+then automatically redirect to the main application.
+
+If you need to adjust the video timing, you can modify the timeout 
+value in /src/components/splash/splash-screen.tsx

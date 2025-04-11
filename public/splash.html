@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brisk</title>
+  <!-- Favicon links -->
+  <link rel="icon" href="/logo-icon.png" />
+  <link rel="shortcut icon" href="/logo-icon.png" />
+  <link rel="apple-touch-icon" href="/logo-icon.png" />
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #000;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: white;
+    }
+    
+    .video-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #000;
+      z-index: 1;
+    }
+    
+    /* Overlay to mask text in video */
+    .brand-overlay {
+      position: absolute;
+      right: 15%;
+      top: 50%;
+      transform: translateY(-40%);
+      z-index: 3;
+      pointer-events: none;
+      text-align: right;
+      color: white;
+    }
+    
+    .brand-overlay h1 {
+      font-size: 4rem;
+      font-weight: bold;
+      margin: 0;
+      line-height: 1;
+      text-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .skip-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      z-index: 10;
+      transition: background 0.3s;
+    }
+    
+    .skip-button:hover {
+      background: rgba(0, 0, 0, 0.8);
+    }
+    
+    .countdown {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-size: 16px;
+      z-index: 10;
+    }
+    
+    .fallback-message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 24px;
+      text-align: center;
+      display: none;
+      max-width: 80%;
+      line-height: 1.5;
+    }
+    
+    .fallback-message h2 {
+      margin-bottom: 20px;
+      font-size: 32px;
+      font-weight: 600;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+    
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 18px;
+      text-align: center;
+      z-index: 5;
+    }
+    
+    .fade-out {
+      animation: fadeOut 1s forwards;
+    }
+    
+    /* Ensure video stays visible during the entire fade-out */
+    .video-container.fade-out {
+      position: fixed;
+      z-index: 999;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 1;
+      background-color: #000;
+      animation: videoFadeOut 1s forwards;
+    }
+    
+    @keyframes videoFadeOut {
+      0% { opacity: 1; }
+      99% { opacity: 0.1; z-index: 100; }
+      100% { opacity: 0; z-index: -1; }
+    }
+    
+    .cosmic-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('/logo-icon.png');
+      background-size: cover;
+      background-position: center;
+      opacity: 0.2;
+      z-index: 0;
+    }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="cosmic-background"></div>
+
+  <div class="loading" id="loading">Loading experience...</div>
+  
+  <div class="video-container" id="videoContainer">
+    <!-- Simple video element with maximum compatibility settings -->
+    <video id="splashVideo" preload="auto" muted playsinline autoplay controls
+      style="width: 100%; height: 100%; object-fit: cover;">
+      <source src="brisk-splash-video.mov" type="video/quicktime">
+      <source src="brisk-splash-video.mp4" type="video/mp4">
+      Your browser does not support video playback.
+    </video>
+  </div>
+  
+  <div class="fallback-message" id="fallbackMessage">
+    <h2>Brisk</h2>
+    <p>A modern framework for quantum photonic computing and quantum networks</p>
+    <p style="margin-top: 30px; font-size: 18px; opacity: 0.8;">Redirecting to the main application...</p>
+  </div>
+  
+  <button class="skip-button" id="skipButton">Skip</button>
+  <!-- Countdown timer hidden -->
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const video = document.getElementById('splashVideo');
+      const skipButton = document.getElementById('skipButton');
+      const countdown = document.getElementById('countdown');
+      const videoContainer = document.getElementById('videoContainer');
+      const fallbackMessage = document.getElementById('fallbackMessage');
+      const loading = document.getElementById('loading');
+      
+      let videoPlayed = false;
+      let videoAttempted = false;
+      
+      // Function to redirect to main app
+      // Preload the homepage to make transition faster
+      function preloadHomepage() {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'document';
+        link.href = '/?from_splash=true';
+        document.head.appendChild(link);
+      }
+      
+      // Call preload when the page loads
+      preloadHomepage();
+      
+      function redirectToApp() {
+        // Set flag in localStorage to remember the user has seen the splash
+        localStorage.setItem('brisk_has_seen_splash', 'true');
+        
+        // Immediately redirect to the homepage with minimal delay
+        // This eliminates any visible black screen between transitions
+        window.location.href = '/?from_splash=true';
+      }
+      
+      // Set timeout for redirect instead of countdown
+      function startRedirectTimer() {
+        // Redirect after video duration (about 8-9 seconds)
+        setTimeout(() => {
+          redirectToApp();
+        }, 9000);
+      }
+      
+      // Show fallback message with welcome text
+      function showFallback() {
+        if (videoAttempted) return; // Only show once
+        videoAttempted = true;
+        
+        loading.style.display = 'none';
+        fallbackMessage.style.display = 'block';
+        videoContainer.style.opacity = '0.2';
+        startRedirectTimer();
+      }
+      
+      // Try to play the video
+      function attemptPlayVideo() {
+        if (videoAttempted) return; // Only attempt once
+        videoAttempted = true;
+        loading.style.display = 'none';
+        
+        video.play().then(() => {
+          // Video started playing successfully
+          videoPlayed = true;
+          startRedirectTimer();
+        }).catch(error => {
+          // Autoplay was prevented
+          console.log("Video autoplay was prevented:", error);
+          showFallback();
+        });
+      }
+      
+      // Skip button event
+      skipButton.addEventListener('click', redirectToApp);
+      
+      // When video has loaded enough to play
+      video.addEventListener('canplay', attemptPlayVideo);
+      
+      // When video encounters error
+      video.addEventListener('error', showFallback);
+      
+      // When video ends
+      video.addEventListener('ended', redirectToApp);
+      
+      // Fallback in case video doesn't load or play within 2 seconds
+      setTimeout(() => {
+        if (!videoPlayed) {
+          showFallback();
+        }
+      }, 2000);
+      
+      // Ensure redirect happens even if video doesn't end properly
+      setTimeout(redirectToApp, 11000);
+    });
+  </script>
+</body>
+</html>
