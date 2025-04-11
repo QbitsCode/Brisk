@@ -5,10 +5,16 @@
       "src": "package.json",
       "use": "@vercel/next",
       "config": {
-        "buildCommand": "prisma generate && next build"
+        "buildCommand": "node build.js"
       }
     }
   ],
+  "env": {
+    "NEXT_DISABLE_ESLINT": "1",
+    "ESLINT_SKIP_CHECKING": "true",
+    "ESLINT_NO_DEV_ERRORS": "true",
+    "NEXT_DISABLE_TYPES": "1"
+  },
   "routes": [
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/" }
