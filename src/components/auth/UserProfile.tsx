@@ -34,6 +34,14 @@ export function UserProfile() {
   const { user, logout, setProjectPublic, deleteProject } = useAuth();
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  
+  // Debug log when user info changes to verify image URL
+  console.log('User profile rendering with user:', user ? {
+    name: user.name,
+    email: user.email,
+    hasImage: !!user.image,
+    imageUrl: user.image
+  } : 'No user');
 
   if (!user) {
     return null;
@@ -61,13 +69,65 @@ export function UserProfile() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
+            {user.image ? (
+              <div className="relative h-6 w-6 rounded-full overflow-hidden bg-muted">
+                <img 
+                  src={user.image} 
+                  alt={`${user.name}'s profile`}
+                  className="h-full w-full object-cover"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    console.error('Profile image failed to load:', user.image);
+                    e.currentTarget.style.display = 'none';
+                    // Show the fallback icon only when image fails
+                    const parent = e.currentTarget.parentNode as HTMLElement;
+                    const fallback = parent.querySelector('.fallback-icon') as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                {/* Fallback icon that only shows if image fails */}
+                <div className="fallback-icon absolute inset-0 hidden items-center justify-center">
+                  <User className="h-4 w-4" />
+                </div>
+              </div>
+            ) : (
+              <User className="h-4 w-4" />
+            )}
             {user.name}
             <ChevronDown className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <div className="flex items-center p-2">
+            {user.image ? (
+              <div className="relative h-10 w-10 rounded-full overflow-hidden bg-muted mr-3">
+                <img 
+                  src={user.image} 
+                  alt={`${user.name}'s profile`}
+                  className="h-full w-full object-cover"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    console.error('Profile image failed to load:', user.image);
+                    e.currentTarget.style.display = 'none';
+                    // Show the fallback icon only when image fails
+                    const parent = e.currentTarget.parentNode as HTMLElement;
+                    const fallback = parent.querySelector('.fallback-icon') as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                {/* Fallback icon that only shows if image fails */}
+                <div className="fallback-icon absolute inset-0 hidden items-center justify-center">
+                  <User className="h-6 w-6" />
+                </div>
+              </div>
+            ) : (
+              <User className="h-10 w-10 p-2 rounded-full bg-muted mr-3" />
+            )}
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium">{user.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            </div>
+          </div>
           <DropdownMenuSeparator />
           
           <DropdownMenuItem onClick={() => setShowProjectDialog(true)}>

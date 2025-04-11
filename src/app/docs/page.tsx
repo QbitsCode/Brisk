@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 // Icons
-import { Copy, Check, ChevronRight, Menu, X, ExternalLink, AlertCircle, Link2, Github as GitHubIcon } from 'lucide-react'
+import { Copy, Check, ChevronRight, Menu, X, ExternalLink, AlertCircle, Link2 } from 'lucide-react'
 
 interface Section {
   id: string
@@ -633,16 +633,7 @@ function ClientDocsContent() {
             </button>
             <h1 className="font-bold text-xl">Brisk Documentation</h1>
           </div>
-          <div className="flex items-center space-x-4">
-            <a 
-              href="https://github.com/QbitsCode/Brisk" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-slate-400 hover:text-white"
-            >
-              <GitHubIcon size={20} />
-            </a>
-          </div>
+          {/* Right side header area */}
         </div>
       </header>
 
@@ -810,16 +801,7 @@ function ClientDocsContent() {
             <p className="text-slate-400 text-sm">
               Built by Qbits. All rights reserved.
             </p>
-            <div className="flex space-x-6 mt-2 md:mt-0">
-              <a
-                href="https://github.com/QbitsCode/Brisk" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-slate-400 hover:text-white text-sm"
-              >
-                GitHub
-              </a>
-            </div>
+            {/* Footer links can be added here if needed */}
           </div>
         </div>
       </footer>
