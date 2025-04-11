@@ -3,12 +3,7 @@
   "builds": [
     {
       "src": "package.json",
-      "use": "@vercel/next",
-      "config": {
-        "buildCommand": "node deploy.js",
-        "outputDirectory": ".next",
-        "devCommand": "next dev"
-      }
+      "use": "@vercel/next"
     }
   ],
   "env": {

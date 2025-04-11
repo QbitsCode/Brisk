@@ -4,14 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "NEXT_DISABLE_ESLINT=1 ESLINT_NO_DEV_ERRORS=true ESLINT_SKIP_CHECKING=true next build --no-lint",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint || true",
     "export": "next export",
     "deploy": "next build && touch out/.nojekyll",
     "postinstall": "prisma generate",
-    "alt-build": "node -e \"require('fs').writeFileSync('.eslintrc.js', 'module.exports = {extends: [], rules: {}}')\" && NODE_OPTIONS=--max_old_space_size=8192 next build --no-lint",
-    "vercel-build": "node deploy.js"
+    "vercel-build": "prisma generate && next build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
