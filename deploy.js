@@ -1,6 +1,7 @@
-// This script completely disables ESLint during build
+// This script completely disables ESLint during build and fixes Next.js 15 compatibility issues
 const fs = require('fs');
 const { execSync } = require('child_process');
+const path = require('path');
 
 console.log('Preparing for ESLint-free build...');
 
@@ -32,6 +33,50 @@ try {
   execSync('npx prisma generate', { stdio: 'inherit' });
 } catch (error) {
   console.error('Prisma generation error, but continuing build');
+  // Don't exit, try to continue anyway
+}
+
+// Apply auth page fix for Next.js 15 compatibility
+console.log('Fixing auth page for Next.js 15 compatibility...');
+try {
+  // Path to the auth page
+  const authPath = path.join(process.cwd(), 'src', 'app', 'auth', 'page.tsx');
+  
+  // Create the fixed content
+  const fixedContent = `"use client";
+
+import { Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+// Fixed for Next.js 15 compatibility
+const AuthClient = dynamic(() => import('./client-page'), {
+  loading: () => (
+    <div className="flex justify-center items-center min-h-screen">
+      <Loader2 className="animate-spin h-8 w-8 text-white" />
+    </div>
+  )
+});
+
+export default function AuthPage() {
+  return (
+    <Suspense 
+      fallback={
+        <div className="flex justify-center items-center min-h-screen">
+          <Loader2 className="animate-spin h-8 w-8 text-white" />
+        </div>
+      }
+    >
+      <AuthClient />
+    </Suspense>
+  );
+}`;
+
+  // Write the fixed content to the auth page
+  fs.writeFileSync(authPath, fixedContent);
+  console.log('Successfully fixed auth page for Next.js 15 compatibility!');
+} catch (error) {
+  console.error('Error fixing auth page:', error);
   // Don't exit, try to continue anyway
 }
 
