@@ -4,10 +4,9 @@ import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
-// Dynamically import the client component with SSR disabled
-// This ensures useSearchParams() only runs on the client
+// Modified for Next.js 15 compatibility
+// Dynamic import without ssr: false as we're already in a client component
 const AuthClient = dynamic(() => import('./client-page'), {
-  ssr: false,
   loading: () => (
     <div className="flex justify-center items-center min-h-screen">
       <Loader2 className="animate-spin h-8 w-8 text-white" />
@@ -15,7 +14,7 @@ const AuthClient = dynamic(() => import('./client-page'), {
   )
 });
 
-// Server component
+// Client component
 export default function AuthPage() {
   return (
     <Suspense 
