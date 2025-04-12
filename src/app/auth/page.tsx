@@ -4,8 +4,7 @@ import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
-// Modified for Next.js 15 compatibility
-// Dynamic import without ssr: false as we're already in a client component
+// NextJS 15 compatible version - without ssr:false
 const AuthClient = dynamic(() => import('./client-page'), {
   loading: () => (
     <div className="flex justify-center items-center min-h-screen">
