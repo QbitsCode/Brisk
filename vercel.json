@@ -1,22 +1,13 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
+  "buildCommand": "node deploy.js",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "outputDirectory": ".next",
   "env": {
     "NEXT_DISABLE_ESLINT": "1",
-    "ESLINT_SKIP_CHECKING": "true",
-    "ESLINT_NO_DEV_ERRORS": "true",
-    "NEXT_DISABLE_TYPES": "1",
     "NEXT_TELEMETRY_DISABLED": "1",
-    "CI": "false",
+    "NODE_ENV": "production",
     "DATABASE_URL": "file:/tmp/dev.db"
-  },
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/" }
-  ]
+  }
 }

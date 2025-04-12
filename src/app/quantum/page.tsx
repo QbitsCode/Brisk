@@ -1,10 +1,13 @@
 'use client'
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import QuantumCircuitCard from "@/components/quantum/QuantumCircuitCard"
+// Only import what's actually used
 import PhotonicChipDesigner from "@/components/quantum/PhotonicChipDesigner"
-import QuantumNetworkSimulator from "@/components/quantum/QuantumNetworkSimulator"
-import { BB84Card } from "@/components/quantum/BB84Card"
+
+// Commented out unused imports to fix ESLint errors
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+// import QuantumCircuitCard from "@/components/quantum/QuantumCircuitCard"
+// import QuantumNetworkSimulator from "@/components/quantum/QuantumNetworkSimulator"
+// import { BB84Card } from "@/components/quantum/BB84Card"
 
 export default function QuantumPage() {
   return (
