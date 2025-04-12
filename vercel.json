@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "buildCommand": "npm install && node deploy.js",
+  "buildCommand": "npm install && NODE_ENV=production NEXT_DISABLE_ESLINT=1 SKIP_ESLINT=true node deploy.js",
   "installCommand": "echo 'Skipping default install'",
   "framework": "nextjs",
-  "outputDirectory": ".next",
+  "outputDirectory": "out",
   "env": {
     "NEXT_DISABLE_ESLINT": "1",
     "ESLINT_SKIP_CHECKING": "true",
@@ -14,6 +14,9 @@
     "CI": "false",
     "SKIP_ESLINT": "true",
     "DATABASE_URL": "file:/tmp/dev.db",
-    "NODE_OPTIONS": "--max-old-space-size=4096"
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "NEXT_EXPORT": "true",
+    "NEXT_FORCE_EXPORT": "true",
+    "NEXT_OUTPUT": "export"
   }
 }
