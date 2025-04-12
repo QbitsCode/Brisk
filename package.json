@@ -10,7 +10,7 @@
     "export": "next export",
     "deploy": "next build && touch out/.nojekyll",
     "postinstall": "prisma generate",
-    "vercel-build": "PRISMA_CLIENT_ENGINE_TYPE=binary DATABASE_URL=file:/tmp/dev.db prisma generate && NEXT_DISABLE_ESLINT=1 next build"
+    "vercel-build": "node deploy.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
