@@ -1,20 +1,34 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, useToast } from '@/components/ui';
 import { useAuth } from '@/components/auth';
 import { Loader2, CheckCircle, XCircle, Mail } from 'lucide-react';
 import Link from 'next/link';
 
+// Main component that wraps the content in a Suspense boundary
 export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center min-h-screen">
+        <Loader2 className="animate-spin h-8 w-8 text-primary" />
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
+  );
+}
+
+// Component that uses useSearchParams must be wrapped in Suspense
+function VerifyEmailContent() {
   const [status, setStatus] = useState<'verifying' | 'success' | 'failed'>('verifying');
   const [email, setEmail] = useState('');
   const [token, setToken] = useState('');
   const [isResending, setIsResending] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams(); // This needs to be wrapped in Suspense
   const { verifyEmail, resendVerification, isLoading } = useAuth();
 
   useEffect(() => {
