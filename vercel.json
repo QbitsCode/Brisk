@@ -1,22 +1,3 @@
 {
-  "version": 2,
-  "framework": "nextjs",
-  "buildCommand": "npm install && NODE_ENV=production next build",
-  "installCommand": "npm install",
-  "outputDirectory": ".next",
-  "env": {
-    "NEXT_DISABLE_ESLINT": "1",
-    "ESLINT_SKIP_CHECKING": "true",
-    "ESLINT_NO_DEV_ERRORS": "true",
-    "NEXT_DISABLE_TYPECHECK": "1",
-    "NEXT_TELEMETRY_DISABLED": "1",
-    "NODE_ENV": "production",
-    "CI": "false",
-    "SKIP_ESLINT": "true",
-    "DATABASE_URL": "file:/tmp/dev.db",
-    "NODE_OPTIONS": "--max-old-space-size=4096",
-    "NEXT_EXPORT": "true",
-    "NEXT_FORCE_EXPORT": "true",
-    "NEXT_OUTPUT": "export"
-  }
+  "framework": "nextjs"
 }
