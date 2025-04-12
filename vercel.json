@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "npm install && NODE_ENV=production NEXT_DISABLE_ESLINT=1 SKIP_ESLINT=true node deploy.js",
-  "installCommand": "echo 'Skipping default install'",
+  "buildCommand": "npm install --no-audit --prefer-offline && NODE_ENV=production NEXT_DISABLE_ESLINT=1 SKIP_ESLINT=true node deploy.js",
+  "installCommand": "npm install --no-audit --prefer-offline",
   "framework": "nextjs",
   "outputDirectory": "out",
   "env": {
