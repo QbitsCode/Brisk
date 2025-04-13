@@ -1,5 +1,8 @@
+# Brisk
 
-
+<p align="center">
+  <img src="https://github.com/QbitsCode/Brisk/blob/main/public/logo.png" />
+</p>
 
 # Brisk Quantum Framework
 
