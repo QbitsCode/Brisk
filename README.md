@@ -5,6 +5,12 @@
 
 <h1 align="center" style="font-size: 4em;">Brisk</h1>
 
+[![License](https://img.shields.io/badge/License-Apache_2.0-brightgreen)](http://www.apache.org/licenses/LICENSE-2.0)
+[![Status](https://img.shields.io/badge/Status-Active-blue)](https://github.com/QbitsCode/Brisk)
+[![Platform](https://img.shields.io/badge/Platform-Quantum_Photonic-orange)](https://github.com/QbitsCode/Brisk)
+[![Version](https://img.shields.io/badge/Version-1.0.0-yellow)](https://github.com/QbitsCode/Brisk/releases)
+[![Framework](https://img.shields.io/badge/Framework-Brisk-purple)](https://github.com/QbitsCode/Brisk)
+[![Made by Qbits](https://img.shields.io/badge/Made_by-Qbits-black)](https://www.qbitsest.com/)
 
 ### Brisk Quantum Framework
 
