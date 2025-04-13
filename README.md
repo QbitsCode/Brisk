@@ -1,10 +1,15 @@
-<h1 align="center" style="font-size: 4em;">Brisk</h1>
-
+<!-- Logo and Title tightly grouped -->
 <p align="center">
-  <img src="https://github.com/QbitsCode/Brisk/blob/main/public/logo.png" />
+  <img src="https://github.com/QbitsCode/Brisk/blob/main/public/logo.png?raw=true" width="180" />
 </p>
 
-# Brisk Quantum Framework
+<p align="center">
+  <strong style="font-size: 32px;">Brisk</strong>
+</p>
+
+---
+
+### Brisk Quantum Framework
 
 A modern, interactive quantum computing framework for photonic quantum circuits and quantum network simulations.
 
