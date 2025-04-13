@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://i.ibb.co/S4Q9Xts/brisk-logo.png" alt="Brisk Logo" width="300"/>
+  <img src="https://i.ibb.co/4S5GpGn/brisk-logo.png" alt="Brisk Logo" width="300"/>
 </p>
 
 
