@@ -3,11 +3,8 @@
   <img src="https://github.com/QbitsCode/Brisk/blob/main/public/logo.png?raw=true" width="180" />
 </p>
 
-<p align="center">
-  <strong style="font-size: 32px;">Brisk</strong>
-</p>
+<h1 align="center" style="font-size: 4em;">Brisk</h1>
 
----
 
 ### Brisk Quantum Framework
 
