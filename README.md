@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://i.ibb.co/4S5GpGn/brisk-logo.png" alt="Brisk Logo" width="300"/>
+  <img src="[https://i.ibb.co/4S5GpGn/brisk-logo.png](https://imagekit.io/tools/asset-public-link?detail=%7B%22name%22%3A%22brisklogo.jpg%22%2C%22type%22%3A%22image%2Fjpeg%22%2C%22signedurl_expire%22%3A%222028-04-12T17%3A03%3A38.792Z%22%2C%22signedUrl%22%3A%22https%3A%2F%2Fmedia-hosting.imagekit.io%2F98dd36359eca4fc5%2Fbrisklogo.jpg%3FExpires%3D1839171819%26Key-Pair-Id%3DK2ZIVPTIP2VGHC%26Signature%3DWzqVTHFPEMevwvGGvWP8bsQOjojmDu5imCb-0RbB7dFxMDLGJGYzrwr8EoZF8Iun1O87HTTmqebkqNgmgIFqtxA-Y6lcxnBxgLHe-xnYd79yupUcOIjdDODkSPya4~~vj4qtlXzHCpbrKXiT3zvA7bRYTPKrUcTbo7XTH6Sc0Q9-rWEOKj4ttQgZ49StZJANXH9D9Fleh1Q1c9~anv7wdbe8i3CfsOU7CraUaFj9vzDvj-t7XBT0DkaHi~B-N7SQCXmXq4YeYVt4yrtb3x6zMLzVw~rtOwE~DXoYkv345LpJjuZgFQ635W0xgvAOUTFI-j7p-SuukEg-Ii3oWSx1uQ__%22%7D)" alt="Brisk Logo" width="300"/>
 </p>
 
 
