@@ -1,0 +1,81 @@
+# Code of Conduct for Brisk (Software Framework) and Qbits (Company)
+
+## Brisk Code of Conduct (Software Framework)
+
+At **Brisk**, we are committed to creating a welcoming and inclusive environment for all contributors and users. By participating in this project, you agree to abide by the following guidelines:
+
+### 1. Respectful Communication
+- Treat everyone with kindness, empathy, and respect.
+- Use appropriate language and tone in all interactions.
+- Disagree constructively and be open to feedback.
+
+### 2. Inclusivity
+- We welcome individuals from diverse backgrounds, and we aim to create a safe space for all people.
+- Discrimination, harassment, or hate speech of any kind is not tolerated.
+- Encourage diverse perspectives and contributions to the project.
+
+### 3. Constructive Collaboration
+- Collaboration is encouraged—whether it's code contributions, documentation, bug reports, or general suggestions.
+- Acknowledge and credit contributions from others.
+- Be open to receiving and giving feedback in a professional manner.
+
+### 4. Reporting Issues
+- If you experience or witness any violations of this Code of Conduct, please report them to the Brisk team via **contact@qbitsest.com**.
+- We will investigate all reported incidents thoroughly and take appropriate action.
+
+### 5. Zero Tolerance Policy
+- Any form of abusive, discriminatory, or otherwise inappropriate behavior will not be tolerated.
+- Violations may result in temporary or permanent bans from participating in the project.
+
+For further details, please refer to the full [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+
+---
+
+## Qbits Code of Conduct (Company)
+
+As part of **Qbits**, we are committed to fostering a workplace culture that is diverse, inclusive, and focused on respect, innovation, and excellence. All employees, partners, and collaborators are expected to adhere to the following Code of Conduct:
+
+### 1. Integrity
+- We act with integrity and transparency in all business dealings.
+- Uphold the highest ethical standards in every interaction with clients, partners, and each other.
+
+### 2. Respect and Dignity
+- We treat all individuals with respect, dignity, and fairness.
+- Discrimination or harassment of any kind will not be tolerated.
+- We celebrate diversity and encourage an inclusive workplace environment.
+
+### 3. Collaboration
+- We value teamwork and cooperation in achieving our goals.
+- We are open to new ideas, and we encourage the free exchange of information to drive innovation.
+- Our success depends on creating a supportive environment where everyone can thrive.
+
+### 4. Accountability
+- We take responsibility for our actions and decisions.
+- We hold ourselves and our colleagues accountable for meeting the company’s goals and upholding its values.
+
+### 5. Compliance and Safety
+- All employees are expected to adhere to legal and regulatory requirements relevant to their roles.
+- We prioritize the safety and well-being of our employees, customers, and the broader community.
+- Confidentiality and privacy should be respected at all times.
+
+### 6. Reporting Violations
+- Employees are encouraged to report any violations of the Code of Conduct through the company’s designated channels at **contact@qbitsest.com**.
+- Retaliation against those who report issues in good faith will not be tolerated.
+
+### 7. Commitment to Growth
+- We are committed to personal and professional growth, continuously seeking to improve and develop skills.
+- The company encourages a growth mindset and provides opportunities for learning and development.
+
+By joining Qbits, you contribute to building a positive and innovative company culture that promotes the values of integrity, respect, and excellence.
+
+---
+
+### Next Steps:
+
+1. **Create the File**: Create a new file named `CODE_OF_CONDUCT.md` in the root of your repository or internal documentation.
+2. **Paste the Text**: Copy and paste the entire text above into the `CODE_OF_CONDUCT.md` file.
+3. **Publish and Share**: Share the link to the document in your project repository and internal company communication channels.
+
+---
+
+Let me know if you need further adjustments or have additional questions!
