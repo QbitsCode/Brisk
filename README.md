@@ -1,3 +1,6 @@
+![Brisk Logo](https://ibb.co/S4Q9XtsY)
+
+
 # Brisk Quantum Framework
 
 A modern, interactive quantum computing framework for photonic quantum circuits and quantum network simulations.
