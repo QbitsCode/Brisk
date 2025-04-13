@@ -1,0 +1,33 @@
+## 🔒 Security
+
+We take security seriously at Brisk and Qbits.
+
+### 🔐 Vulnerability Reporting
+
+If you believe you've discovered a security vulnerability within Brisk, please report it responsibly by emailing us at:
+
+📩 **contact@qbitsest.com**
+
+We will acknowledge your report and investigate swiftly.
+
+### 🔄 Security Updates
+
+Brisk is regularly updated. Please ensure you're using the latest release and monitor our [Releases](https://github.com/QbitsCode/Brisk/releases) page.
+
+### 🔍 Code Review & Audits
+
+All contributions to Brisk are subject to peer review with an emphasis on:
+
+- Stability
+- Security
+- Quantum-safe design
+
+Periodic security audits are part of our development lifecycle.
+
+### ✅ Best Practices for Users
+
+- Never expose private keys or sensitive config files publicly.
+- Stay updated with security patches.
+- Use verified dependencies and monitor their integrity.
+
+Brisk is committed to building a quantum-secure ecosystem in partnership with our users and contributors.
